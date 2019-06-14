@@ -92,7 +92,7 @@ AUTOTHROTTLE_DEBUG = False
 import datetime
 START_DATE = datetime.datetime.strptime("2019-06",'%Y-%m').date()
 END_DATE = datetime.datetime.strptime("2019-07",'%Y-%m').date()
-NUM_TIEZI = 500
+NUM_TIEZI = 1000
 import os
 script_dir = os.path.dirname(__file__)  # <-- absolute dir the script is in
 rel_path = '../../results'

@@ -29,23 +29,26 @@ class WebcrawlerPipeline(object):
                 tiebas = dict(row[:2] for row in list(reader))
 
                 tiebas_name = item['tieba_name']
-                print('------------------------tieba-tobe-added-------------------------------')
-                print(tiebas_name)
+                # print('------------------------tieba-tobe-added-------------------------------')
+                # print(tiebas_name)
                 for tieba_name in tiebas_name:
-                    print('-----------------------Pipeline-tieba-------------------------------')                   
+                    # print('-----------------------Pipeline-tieba-------------------------------')                   
                     tieba = str(tieba_name).strip()
-                    print('-----------------------before-dict-tieba-------------------------------')
-                    print(tiebas)
-                    print(tieba)
+                    # print('-----------------------before-dict-tieba-------------------------------')
+                    # print(tiebas)
+                    # print(tieba)
+                    if tieba is '':
+                        continue
+
                     if tieba not in list(tiebas.keys()):
-                        print('does not exist')
+                        # print('does not exist')
                         tiebas.update({tieba : 1 })
                     else:
                         tiebas[tieba] = int(tiebas[tieba_name]) + 1
-                        print('already exists!')
+                        # print('already exists!')
                         
-                    print('-----------------------after-dict-tieba-------------------------------')
-                    print(tiebas)
+                    # print('-----------------------after-dict-tieba-------------------------------')
+                    # print(tiebas)
 
             with open(FILE_PATH + '/tieba_count.csv', 'w+', encoding='utf-8', newline='') as f:   
                 f.seek(0)

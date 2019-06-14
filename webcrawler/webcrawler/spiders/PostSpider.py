@@ -22,13 +22,13 @@ class PostSpider(scrapy.Spider):
         # To make everything dynamic, we need to override them inside __init__ method
 
         #singular - from argument
-        # self.keyword = kwargs.get('keyword')
-        # self.start_date = datetime.datetime.strptime(kwargs.get('start_date'),'%Y-%m').date()
-        # self.end_date = datetime.datetime.strptime(kwargs.get('end_date'),'%Y-%m').date()
+        self.keyword = kwargs.get('keyword')
+        self.start_date = datetime.datetime.strptime(kwargs.get('start_date'),'%Y-%m').date()
+        self.end_date = datetime.datetime.strptime(kwargs.get('end_date'),'%Y-%m').date()
 
-        self.keyword = '%E4%BA%8C%E6%AC%A1%E5%85%83'#二次元
-        self.start_date = START_DATE
-        self.end_date = END_DATE
+        # self.keyword = '%E4%BA%8C%E6%AC%A1%E5%85%83'#二次元
+        # self.start_date = START_DATE
+        # self.end_date = END_DATE
         
         # self.domain = kwargs.get('domain')
         #in list form
@@ -86,8 +86,8 @@ class PostSpider(scrapy.Spider):
                 print(post_date)
             elif len(sel.css('.p_tail::text').extract()) > 0: #<ul class="p_tail"><li><span>9楼</span></li><li><span>2018-01-13 22:41</span></li></ul>
                 post_date = str(sel.css('.p_tail::text').extract()[-1]).strip()
-                print('-----------------.p_tail::text----------------------------')
-                print(post_date)
+                # print('-----------------.p_tail::text----------------------------')
+                # print(post_date)
             else:
                 print('-----------------.none----------------------------')
                 post_date = ''
@@ -146,8 +146,8 @@ class PostSpider(scrapy.Spider):
         posting_tieba_sel = Selector(response).css('.n_name::text').extract()
         tiebas = following_tieba_sel + posting_tieba_sel
 
-        print('-----------------------Spider-tieba-------------------------------')
-        print(tiebas)
+        # print('-----------------------Spider-tieba-------------------------------')
+        # print(tiebas)
         item = TiebaItem()
         item['tieba_name'] = set(tiebas)  
         return item
