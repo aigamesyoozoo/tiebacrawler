@@ -1,0 +1,24 @@
+ {% extends 'main/base.html' %}
+ {% block content %}
+
+ <div class="alert alert-warning crawl_message" role="alert">
+  <h2 class="alert-heading">Downloading in progress...</h2>
+     <br>
+  <p>Downloading comments, replies, and popular tiebas among users who had posted
+     <strong>
+      <ul>
+         <li>in {{ keyword }}吧 </li>
+         <li>from {{ start_date }}</li>
+         <li>to {{ end_date }} </li>
+     </ul>
+     </strong>
+  </p>
+  <hr>
+  <p class="mb-0">Kindly give us a moment while we complete your downloading.
+  The more the available data, the longer the downloading period.</p>
+</div>
+
+  <img id="progress_gif" src="/static/main/images/rotator.gif" alt="downloading in progress">
+
+
+ {% endblock %}

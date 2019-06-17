@@ -1,0 +1,48 @@
+body {
+  background-color: #fafafa;
+}
+.query_box {
+  width: 70%;
+  background-color: white;
+  margin: 50px auto;
+  padding: 40px;
+  border-radius: 20px;
+  border: 1px solid #dddddd;
+}
+
+.crawl_message {
+  width: 90%;
+  margin: 50px auto;
+  margin-top: 20px;
+  margin-bottom: 20px;
+  padding: 30px;
+}
+
+#progress_gif {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  height: 100px;
+}
+
+.wrapper {
+  width: 70%;
+  margin: 50px auto;
+  margin-top: 30px;
+  text-align: center;
+}
+
+#download_segment {
+  display: none;
+}
+
+#query_segment {
+  display: block;
+}
+
+#tieba_count_list {
+  list-style: none;
+}
+li {
+  margin-bottom: 10px;
+}

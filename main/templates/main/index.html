@@ -1,0 +1,17 @@
+ {% extends 'main/base.html' %}
+ {% block content %}
+
+<!-- {% load static %}-->
+<!-- <link rel="stylesheet" type="text/css" href="{% static 'main/style.css' %}">-->
+
+ <div class="query_box">
+     <h3>Welcome to Tieba WebScraper!</h3>
+     <br>
+     <form action="{% url 'main:home' %}" method="get">
+         <input type="text" name="kw" placeholder="Enter keywords to search for available forums/Tieba" class="form-control">
+         <br>
+         <input type="submit" value="Search for forums/Tieba" class="btn btn-success">
+     </form>
+ </div>
+
+ {% endblock %}
