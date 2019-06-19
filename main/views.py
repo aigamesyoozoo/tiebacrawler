@@ -33,15 +33,19 @@ def popular_tiebas_among_users_who_posted():
     all_forums = read_csv_as_dict_list(TIEBACOUNT_PATH)
     if all_forums:
         all_forums.sort(key=lambda x: int(x['count']), reverse=True)
-        count_per_em = int(int(all_forums[0]['count']) / 4)
-        count_per_em = 1 if count_per_em is 0 else count_per_em
     for f in all_forums:
-        f['count'] = int(int(f['count']) / count_per_em)
-        if f['count'] is 0:
-            f['count'] = 1
+        # replace / with a safe character
+        f['cleaned_name'] = f['tieba'].replace('/', '^')
+        # count_per_em = int(int(all_forums[0]['count']) / 4)
+        # count_per_em = 1 if count_per_em is 0 else count_per_em
+    # for f in all_forums:
+    #     f['count'] = int(int(f['count']) / count_per_em)
+    #     if f['count'] is 0:
+    #         f['count'] = 1
     return all_forums
 
 
+# direct view of results.html for debugging purposes
 def result(request):
     all_forums = popular_tiebas_among_users_who_posted()
     context = {
@@ -61,12 +65,13 @@ def read_csv_as_dict_list(file_to_read):
 
 
 def rehome(request, tieba):
-    return render(request, 'main/home.html', {'forums': [tieba]})
+    return render(request, 'main/home.html', {'forums': [tieba.replace('^', '/')]})
 
 
 def home(request):
     forums = []
     keyword = request.GET.get('kw')
+    print('keword is: ', keyword)
     if keyword:
         forums = get_related_forums_by_selenium(keyword)
     context = {'forums': forums}

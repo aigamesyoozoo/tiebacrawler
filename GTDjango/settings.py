@@ -20,7 +20,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/2.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-#yuhan paste here
+#secret key removed
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -123,7 +123,6 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-# Chromedriver
 script_dir = os.path.dirname(__file__)  # <-- absolute dir the script is in
 script_path = Path(script_dir)
 rel_path_results = '../results/'
@@ -137,5 +136,4 @@ CHROMEDRIVER_PATH = r'C:\Program Files\Chromedriver\chromedriver.exe'
 # TIEBACOUNT_PATH = os.path.join(script_dir, rel_path_tiebacount)
 #using Path
 
-
-
+DOWNLOAD_URL = '/downloads/'
