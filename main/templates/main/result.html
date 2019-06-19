@@ -8,9 +8,12 @@
     users who had posted in <b>{{ keyword }}吧</b> from <b>{{ start_date }}</b> to
     <b>{{ end_date }}</b>.
   </p>
-  <!--     <p>Status is <strong>{{ status }}</strong></p>-->
+
   <p>
     The .csv files can be found in your directory. <i>{{ path }}</i>
+    <ul>
+      <li><a href="/downloads/comments.csv">comments.csv</a></li>
+    </ul>
   </p>
 </div>
 
@@ -24,7 +27,7 @@
   <p>
     <ul id="tieba_count_list">
     {% for f in forums %}
-    <li><a href="{% url 'main:rehome' f.tieba%}">{{ f.tieba }} <span class="badge badge-dark">{{ f.count }} hit{% if f.count > 1 %}s{% endif %}</span></a></li>
+    <li><a href="{% url 'main:rehome' f.cleaned_name %}">{{ f.tieba }} <span class="badge badge-dark">{{ f.count }} hit{% if f.count > 1 %}s{% endif %}</span></a></li>
     {% endfor %}
   </ul>
   </p>
