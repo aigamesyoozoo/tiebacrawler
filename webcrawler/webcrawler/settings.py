@@ -49,15 +49,15 @@ ROBOTSTXT_OBEY = False
 # PROXY_POOL_ENABLED = True
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
-#CONCURRENT_REQUESTS = 32
+CONCURRENT_REQUESTS = 32
 
 # Configure a delay for requests for the same website (default: 0)
 # See https://doc.scrapy.org/en/latest/topics/settings.html#download-delay
 # See also autothrottle settings and docs
 # DOWNLOAD_DELAY = 3
 # The download delay setting will honor only one of:
-#CONCURRENT_REQUESTS_PER_DOMAIN = 16
-#CONCURRENT_REQUESTS_PER_IP = 16
+CONCURRENT_REQUESTS_PER_DOMAIN = 16
+CONCURRENT_REQUESTS_PER_IP = 16
 
 # Disable cookies (enabled by default)
 COOKIES_ENABLED = False
@@ -120,28 +120,11 @@ ITEM_PIPELINES = {
 
 FEED_EXPORT_ENCODING = 'utf-8'
 
-START_DATE = datetime.datetime.strptime("2019-06", '%Y-%m').date()
-END_DATE = datetime.datetime.strptime("2019-07", '%Y-%m').date()
-NUM_TIEZI = 50
+START_DATE = datetime.datetime.strptime("2019-03", '%Y-%m').date()
+END_DATE = datetime.datetime.strptime("2019-06", '%Y-%m').date()
+NUM_TIEZI = 1000
 script_dir = os.path.dirname(__file__)  # <-- absolute dir the script is in
 rel_path = '../../results'
 FILE_PATH = os.path.join(script_dir, rel_path)
 
 
-# BAIDUID=794E986AA686897D83A246CFDC7EDDCB:FG=1;
-# pgv_pvi=5716038656;
-# BIDUPSID=794E986AA686897D83A246CFDC7EDDCB;
-# PSTM=1552895031;
-# TIEBA_USERTYPE=e56b4cc7fde5cc70f1eb2833;
-# bdshare_firstime=1555395819541;
-# BAIDU_WISE_UID=wapp_1556764853453_759;
-# ZD_ENTRY=google;
-# cflag=13%3A3;
-# pgv_si=s2056644608;
-# TIEBAUID=902f5df64a57aa5f243f420e;
-# wise_device=0;
-# 1380099753_FRSVideoUploadTip=1;
-# BDUSS=EFFb25hcEE4ZmNqc1B-WEx2bUZBYm9Zek9lVlEyUXVRQVVHV2JPUHF1fmVGQnhkSVFBQUFBJCQAAAAAAAAAAAEAAACppkJS9-m5xQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAN6H9Fzeh~RcU;
-# STOKEN=b195c50cd9315ed43fe1d69308e267e7aa14bae5640a019dc9af241cf8126349;
-# Hm_lvt_98b9d8c2fd6608d564bf2ac2ae642948=1559199658,1559202172,1559294726,1559529573;
-# Hm_lpvt_98b9d8c2fd6608d564bf2ac2ae642948=1559530718
