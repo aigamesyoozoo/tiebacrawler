@@ -61,7 +61,7 @@ class WebcrawlerPipeline(object):
                     # print('-----------------------after-dict-tieba-------------------------------')
                     # print(tiebas)
 
-            with open(FOLDER_NAME + '/tieba_count.csv', 'w+', encoding='utf-8', newline='') as f:   
+            with open(self.FOLDER_NAME + '/tieba_count.csv', 'w+', encoding='utf-8', newline='') as f:   
                 f.seek(0)
                 writer = csv.writer(f)
                 writer.writerows(tiebas.items())
