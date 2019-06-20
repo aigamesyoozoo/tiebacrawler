@@ -5,25 +5,36 @@
 # Don't forget to add your pipeline to the ITEM_PIPELINES setting
 # See: https://doc.scrapy.org/en/latest/topics/item-pipeline.html
 from webcrawler.items import TiebaItem,PostItem,ReplyItem,CommentItem
-from webcrawler.settings import FILE_PATH
+# from webcrawler.settings import FILE_PATH
+from webcrawler.spiders import PostSpider
 import csv
+import os
 
 class WebcrawlerPipeline(object):
+    
+    ####################need to be pushed###################
+    script_dir = os.path.dirname(__file__)  # <-- absolute dir the script is in
+    FOLDER_NAME = os.path.join(script_dir, '../../results/')
+
+    def open_spider(self,spider): 
+        self.FOLDER_NAME = self.FOLDER_NAME + str(spider.folder_name)
+    ####################need to be pushed###################
+
     def process_item(self, item, spider):
         if isinstance(item, PostItem):
-            with open(FILE_PATH+'/posts.csv', 'a+', encoding='utf-8', newline='') as f:
+            with open(self.FOLDER_NAME+'/posts.csv', 'a+', encoding='utf-8', newline='') as f:
                 csv.writer(f, dialect="excel").writerow((item['post_id'],item['title'],item['reply_num']))
 
         elif isinstance(item, ReplyItem):         
-            with open(FILE_PATH+'/replies.csv', 'a+', encoding='utf-8', newline='') as f:
+            with open(self.FOLDER_NAME+'/replies.csv', 'a+', encoding='utf-8', newline='') as f:
                 csv.writer(f, dialect="excel").writerow((item['post_id'],item['reply_id'],item['content'],item['comment_num']))
 
         elif isinstance(item, CommentItem):
-            with open(FILE_PATH+'/comments.csv', 'a+', encoding='utf-8', newline='') as f:
+            with open(self.FOLDER_NAME+'/comments.csv', 'a+', encoding='utf-8', newline='') as f:
                 csv.writer(f, dialect="excel").writerow((item['post_id'],item['reply_id'],item['content']))
 
         elif isinstance(item, TiebaItem):
-            with open(FILE_PATH + '/tieba_count.csv', 'a+', encoding='utf-8', newline='') as f:
+            with open(self.FOLDER_NAME + '/tieba_count.csv', 'a+', encoding='utf-8', newline='') as f:
                 f.seek(0)
                 reader = csv.reader(f)
                 tiebas = dict(row[:2] for row in list(reader))
@@ -50,7 +61,7 @@ class WebcrawlerPipeline(object):
                     # print('-----------------------after-dict-tieba-------------------------------')
                     # print(tiebas)
 
-            with open(FILE_PATH + '/tieba_count.csv', 'w+', encoding='utf-8', newline='') as f:   
+            with open(FOLDER_NAME + '/tieba_count.csv', 'w+', encoding='utf-8', newline='') as f:   
                 f.seek(0)
                 writer = csv.writer(f)
                 writer.writerows(tiebas.items())

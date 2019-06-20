@@ -20,7 +20,7 @@ import json
 
 
 scrapyd = ScrapydAPI('http://localhost:6800')
-
+task = ''
 
 def index(request):
     return render(request, 'main/index.html')
@@ -83,26 +83,43 @@ def get_related_forums_by_selenium(keyword):
     options = Options()
     options.headless = True
     browser = webdriver.Chrome(CHROMEDRIVER_PATH, chrome_options=options)
+    # browser = webdriver.Chrome(CHROMEDRIVER_PATH)
     browser.get('http://c.tieba.baidu.com/')
 
+    keyword_list = keyword.split() #filter(None,str.split(" "))
+    keyword_list.append(keyword)
+    relevant_forums_title = []
+    # browser.implicitly_wait(1)  # time intervals given for scrapy to crawl
+    # search_textbox = browser.find_element_by_id("wd1")
+    for kw in keyword_list:
+        forums = []
+        forums = get_related_forum_one_kw(browser,kw)
+        relevant_forums_title = relevant_forums_title + forums   
+    # browser.quit()
+
+    return set(relevant_forums_title)
+
+def get_related_forum_one_kw(browser,keyword):
     search_textbox = browser.find_element_by_id("wd1")
-    browser.implicitly_wait(4)  # time intervals given for scrapy to crawl
+    search_textbox.clear()
     search_textbox.send_keys(keyword)
+    time.sleep(1)  # for fully rendering js 
+    # relevant_forums_title = []
+    # relevant_forums_webelements = []
+    # relevant_forums_data = []
+    webelements_json = []
     # relevant_forums_webelements = browser.find_elements_by_css_selector(
     #     ".forum_name , .highlight")
     # relevant_forums_title = [forum.text for index, forum in enumerate(
+
     #     relevant_forums_webelements) if index % 2 == 0 or index > 7]
     relevant_forums_webelements = browser.find_elements_by_css_selector(".suggestion_list > li")
-    relevant_forums_data = [webelement.get_attribute("data-field") for webelement in relevant_forums_webelements]
-    webelements_json = []
-    for webelement_json in relevant_forums_data:
-        temp = json.loads(str(webelement_json))
-        # if str(temp['sugType']) in ["forum_item"]:
-        #     print(temp['sugValue'])
-        webelements_json.append(temp)
-    relevant_forums_title = [webelement_json['sugValue']+'吧' for webelement_json in webelements_json if str(webelement_json['sugType']) in ["forum_item"]]           
-    browser.quit()
-
+    relevant_forums_data = [webelement.get_attribute("data-field") for webelement in relevant_forums_webelements]  
+    if relevant_forums_data is not []:
+        for webelement_json in relevant_forums_data:
+            temp = json.loads(str(webelement_json))
+            webelements_json.append(temp)
+        relevant_forums_title = [webelement_json['sugValue']+'吧' for webelement_json in webelements_json if str(webelement_json['sugType']) in ["forum_item"]]           
     return relevant_forums_title
 
 
@@ -117,6 +134,7 @@ def crawl(request):
         if keyword and start_date and end_date:
             task_id, unique_id, status = schedule(
                 keyword, start_date, end_date)
+
             print(task_id, unique_id, status)
 
         while status is not 'finished':
@@ -136,6 +154,7 @@ def crawl(request):
 
 
 def schedule(keyword, start_date, end_date):
+    global task
     unique_id = str(uuid4())  # create a unique ID.
     settings = {
         'unique_id': unique_id,  # unique ID for each record for DB
@@ -149,8 +168,11 @@ def get_crawl_status(task_id):
     return scrapyd.job_status('default', task_id)
 
 def cancel(request):
-    cancelTask()
+    global task
+    print('------------------------------')
+    print(task)
+    scrapyd.cancel('default', task)
     return render(request, 'main/result.html')
 
-def cancelTask():
-    scrapyd.cancel('default', 'tiebacrawler')
+
+    

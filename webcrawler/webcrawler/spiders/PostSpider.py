@@ -19,6 +19,7 @@ class PostSpider(scrapy.Spider):
     request_tieba_url_base = 'http://tieba.baidu.com/f?kw=%s&ie=utf-8'
     # request_tieba_url = request_tieba_url_base % ('%E5%8F%8B%E8%B0%8A%E5%B7%B2%E8%B5%B0%E5%88%B0%E5%B0%BD%E5%A4%B4')
     tiezi_count = 0
+    folder_name =''
 
     def __init__(self, *args, **kwargs):
         # We are going to pass these args from our django view.
@@ -30,6 +31,12 @@ class PostSpider(scrapy.Spider):
             kwargs.get('start_date'), '%Y-%m').date()
         self.end_date = datetime.datetime.strptime(
             kwargs.get('end_date'), '%Y-%m').date()
+
+        ####################need to be pushed###################
+        self.folder_name = kwargs.get('folder_name')
+        ####################need to be pushed###################
+        
+        # self.folder_name = 'xba_2019-02_2019-03'
         print('--------------------------------------------------------------')
         print('INIT VALUES>> self.startdate',
               self.start_date, 'self.enddate', self.end_date)
@@ -60,10 +67,10 @@ class PostSpider(scrapy.Spider):
             create_time = str(create_time).strip()
             last_reply_time = str(last_reply_time).strip()
 
-            print(
-                '-----------------------post-date&&last-reply-date-----------------------------')
-            print(create_time)
-            print(last_reply_time)
+            # print(
+            #     '-----------------------post-date&&last-reply-date-----------------------------')
+            # print(create_time)
+            # print(last_reply_time)
 
             if self.compare_post_date(create_time) or self.compare_post_date(last_reply_time):
                 # 直接取百度的id <a href="/p/6144256076?pid=125817093956&amp;see_lz=1#125817093956"></a>
@@ -100,17 +107,17 @@ class PostSpider(scrapy.Spider):
             if len(sel.css('.tail-info::text').extract()) > 0:
                 post_date = str(
                     sel.css('.tail-info::text').extract()[-1]).strip()
-                print('------------------.tail-info::text----------------------------')
-                print(post_date)
+                # print('------------------.tail-info::text----------------------------')
+                # print(post_date)
             # <ul class="p_tail"><li><span>9楼</span></li><li><span>2018-01-13 22:41</span></li></ul>
             elif len(sel.css('.p_tail::text').extract()) > 0:
                 post_date = str(sel.css('.p_tail::text').extract()[-1]).strip()
                 # print('-----------------.p_tail::text----------------------------')
                 # print(post_date)
             else:
-                print('-----------------.none----------------------------')
+                # print('-----------------.none----------------------------')
                 post_date = ''
-                print(post_date)
+                # print(post_date)
 
             if self.compare_post_date(post_date[:7]):
                 #comment_json_str = sel.css('.j_lzl_r::attr(data-field)').extract_first()
@@ -179,31 +186,7 @@ class PostSpider(scrapy.Spider):
         item['tieba_name'] = set(tiebas)
         return item
 
-    # def compare_post_date(self, post_date):
-    #     if post_date == None or '' or []:
-    #         return False
 
-    #     #postdate = str(post_date)
-    #     postdate = post_date
-    #     splitdate = postdate.split('-')
-    #     if len(splitdate) < 2:
-    #         print('today')
-    #         date = time.strftime("%Y-%m", time.localtime())
-    #         date = datetime.datetime.strptime(date,'%Y-%m').date()
-
-    #     elif int(splitdate[0].strip()) > 12:
-    #         print('with year')
-    #         date = datetime.datetime.strptime(postdate,'%Y-%m').date()
-
-    #     elif int(splitdate[0].strip()) <= 12:
-    #         print('without year')
-    #         postdate = '2019' + '-' + splitdate[0].strip()
-    #         date = datetime.datetime.strptime(postdate,'%Y-%m').date()
-    #     print(date)
-    #     if date >= self.start_date and date <= self.end_date:
-    #         return True
-    #     else :
-    #         return False
 
     def compare_post_date(self, post_date):
         if post_date in ['None', None, '', []]:
