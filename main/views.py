@@ -18,6 +18,7 @@ import os
 import csv
 from pathlib import Path
 from zipfile import ZipFile
+import json
 
 
 scrapyd = ScrapydAPI('http://localhost:6800')
@@ -144,11 +145,19 @@ def get_related_forums_by_selenium(keyword):
 
     search_textbox = browser.find_element_by_id("wd1")
     search_textbox.send_keys(keyword)
-    browser.implicitly_wait(1)  # time intervals given for scrapy to crawl
-    relevant_forums_webelements = browser.find_elements_by_css_selector(
-        ".forum_name , .highlight")
-    relevant_forums_title = [forum.text for index, forum in enumerate(
-        relevant_forums_webelements) if index % 2 == 0 or index > 7]
+    # relevant_forums_webelements = browser.find_elements_by_css_selector(
+    #     ".forum_name , .highlight")
+    # relevant_forums_title = [forum.text for index, forum in enumerate(
+    #     relevant_forums_webelements) if index % 2 == 0 or index > 7]
+    relevant_forums_webelements = browser.find_elements_by_css_selector(".suggestion_list > li")
+    relevant_forums_data = [webelement.get_attribute("data-field") for webelement in relevant_forums_webelements]
+    webelements_json = []
+    for webelement_json in relevant_forums_data:
+        temp = json.loads(str(webelement_json))
+        # if str(temp['sugType']) in ["forum_item"]:
+        #     print(temp['sugValue'])
+        webelements_json.append(temp)
+    relevant_forums_title = [webelement_json['sugValue']+'吧' for webelement_json in webelements_json if str(webelement_json['sugType']) in ["forum_item"]]           
     browser.quit()
 
     return relevant_forums_title
@@ -218,3 +227,10 @@ def schedule(keyword, start_date, end_date, folder_name):
 
 def get_crawl_status(task_id):
     return scrapyd.job_status('default', task_id)
+
+def cancel(request):
+    cancelTask()
+    return render(request, 'main/result.html')
+
+def cancelTask():
+    scrapyd.cancel('default', 'tiebacrawler')
