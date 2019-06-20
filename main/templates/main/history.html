@@ -1,0 +1,15 @@
+{% extends 'main/base.html' %} {% block content %}
+
+<div class="query_box">
+  <h2 style="text-align:center">History</h2>
+  <br />
+  <ul>
+      {% for f in folders %}
+      <li><a href="/downloads/{{f}}/{{f}}.zip">{{ f }}</a></li>
+      {% endfor %}
+    </ul>
+    </li>
+  </ul>
+</div>
+
+{% endblock %}

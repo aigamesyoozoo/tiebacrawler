@@ -1,106 +1,49 @@
-{% extends 'main/base.html' %} {% block content %} {% load static %}
-<link rel="stylesheet" type="text/css" href="{% static 'main/style.css' %}" />
+{% extends 'main/base.html' %} {% block content %}
 
-<script>
-  function validateDates() {
-    var start_date = document.forms["query_form"]["start_date"].value;
-    var end_date = document.forms["query_form"]["end_date"].value;
-    var text = "all ok";
-    if (start_date !== "" && end_date !== "") {
-      console.log("both not empty if clause");
-      d1 = Date.parse(start_date);
-      d2 = Date.parse(end_date);
-      if (d1 > d2) {
-        console.log("d1>d2!");
-        alert("Start date should be same or earlier than end date.");
-        return false;
-      }
-    }
-    downloadView();
-  }
-  function downloadView() {
-    console.log("hello! in downloadview()")
-    var download_segment = document.getElementById("download_segment");
-    var query_segment = document.getElementById("query_segment");
-
-    download_segment.style.display = "block";
-    query_segment.style.display = "none";
-  }
-</script>
-
-
-<div id="download_segment">
-  <div class="alert alert-warning crawl_message" role="alert">
-    <h2 class="alert-heading">Downloading in progress...</h2>
-    <br />
-    <p>
-      Downloading comments, replies, and popular tiebas among users who had
-      posted
-      <strong>
-        <ul>
-          <li>in {{ keyword }}吧</li>
-          <li>from {{ start_date }}</li>
-          <li>to {{ end_date }}</li>
-        </ul>
-      </strong>
-    </p>
-    <hr />
-    <p class="mb-0">
-      Kindly give us a moment while we complete your downloading. The more the
-      available data, the longer the downloading period.
-    </p>
-  </div>
-
-  <img
-    id="progress_gif"
-    src="/static/main/images/rotator2.gif"
-    alt="downloading in progress"
-  />
-  <p style="text-align:center;"><b>Downloading...</b></p>
-</div>
-
-
-<div id="query_segment"" class="query_box">
-  <h3>Welcome to Tieba WebScraper</h3>
+{% if folder %}
+<div class="alert alert-success crawl_message" role="alert">
+  <h4 class="alert-heading">Crawling Complete!</h4>
   <br />
-  <form
-    name="query_form"
-    action="{% url 'main:crawl' %}"
-    onsubmit="return validateDates()"
-    method="post"
-  >
-    {% csrf_token %} 
-    {% if forums %}
-    <p>Selected forum/tieba</p>
-    <select class="form-control" name="keyword">
+  <p>
+    We have crawled for you the posts, comments, replies and list of tiebas among
+    users who had posted in <b>{{ keyword }}吧</b> from <b>{{ start_date }}</b> to
+    <b>{{ end_date }}</b>.
+  </p>
+
+  
+    <p>Download the data: <a href="/downloads/{{folder}}/{{folder}}.zip">{{ folder }}.zip</a>
+    </p>
+</div>
+
+<div class="wrapper">
+  <h2>Popular Tieba</h2>
+
+  {% if forums %}
+    <p>
+      The following are the most popular tieba among users who had posted in the
+      above forum on selected dates. Click on your desired tieba to select desired
+      date range for downloading.
+    </p>
+    <p>
+      <ul id="tieba_count_list">
       {% for f in forums %}
-      <option value="{{ f }}">{{ f }}</option>
+        <li><a href="{% url 'main:rehome' f.cleaned_name %}">{{ f.tieba }} <span class="badge badge-dark">{{ f.count }} hit{% if f.count > 1 %}s{% endif %}</span></a></li>
       {% endfor %}
-    </select>
-    <br />
+      </ul>
+    </p>
+  {% else %}
+    <p>None of the users have liked other tieba.</p>
+  {% endif %}
 
-    <p>Start Month</p>
-    <input type="month" name="start_date" class="form-control" />
-    <br />
-    <p>End Month</p>
-    <input type="month" name="end_date" class="form-control" />
-    <br />
-    <input
-      type="submit"
-      value="Download Comments and Replies"
-      class="btn btn-success"
-    />
+</div>
 
-    {% else %}
-    <p>No relevant forums/tieba. Would you like to return to home page?</p>
-    <a href="{% url 'main:index' %}"> Return to Home Page</a>
-    {% endif %}
-  </form>
+{% else %}
+<div class="alert alert-warning crawl_message" role="alert">
+  <h4 class="alert-heading">Crawling Complete...</h4>
+  <br />
+  <p><b>No posts, comments, replies and other tiebas were found in {{ keyword }}吧 from 
+    {{ start_date }} to {{ end_date }}.</p>
 </div>
-<div>
-    {% for f in forums %}
-        <a href="{% url 'main:rehome' f.tieba%}" style="padding-right: 20px;font-size:{{ f.count }}em">{{ f.tieba }}</a>
-    {% endfor %}
-</div>
+{% endif %}
 
 {% endblock %}

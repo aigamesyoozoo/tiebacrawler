@@ -1,17 +1,54 @@
- {% extends 'main/base.html' %}
- {% block content %}
+{% extends 'main/base.html' %} {% block content %}
 
 <!-- {% load static %}-->
 <!-- <link rel="stylesheet" type="text/css" href="{% static 'main/style.css' %}">-->
 
- <div class="query_box">
-     <h3>Welcome to Tieba WebScraper!</h3>
-     <br>
-     <form action="{% url 'main:home' %}" method="get">
-         <input type="text" name="kw" placeholder="Enter keywords to search for available forums/Tieba" class="form-control">
-         <br>
-         <input type="submit" value="Search for forums/Tieba" class="btn btn-success">
-     </form>
- </div>
+<div class="query_box">
+  <h3>Search for Tieba</h3>
+  <br />
+  <form action="{% url 'main:home' %}" method="get">
+    <input
+      type="text"
+      name="kw"
+      placeholder="Enter keywords"
+      class="form-control"
+    /><br>
+    
+    <input
+      type="submit"
+      value="Search for available forums/Tieba"
+      class="btn btn-success"
+    /><br><br>
+  </form>
 
- {% endblock %}
+    {% if history_tieba %}
+    <form action="{% url 'main:home'%}" method="get">
+      <p><i>Or search by previous tieba crawled instead:</i>
+        <select name="tieba" style="display:inline-block;" onchange="this.form.submit()">
+          {% for tieba in history_tieba %}
+          <option value="{{ tieba }}">{{ tieba }}</option>
+          {% endfor %}
+        </select>
+      </p>
+    </form>
+    {% endif %}
+  
+</div>
+
+<div class="query_box">
+    <h4 style="text-align:center">History</h4>
+    <br />
+    {% if history_tieba %}
+    <ul>
+        {% for h in history %}
+        <li><a href="/downloads/{{h}}/{{h}}.zip">{{ h }}.zip</a></li>
+        {% endfor %}
+      </ul>
+      </li>
+    </ul>
+    {% else %}
+    <p>No history at the moment.</p>
+    {% endif %}
+  </div>
+
+{% endblock %}

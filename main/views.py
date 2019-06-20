@@ -23,7 +23,6 @@ import json
 
 scrapyd = ScrapydAPI('http://localhost:6800')
 task = ''
-shared = 'abc'
 keyword = ''
 start_date = ''
 end_date = ''
@@ -150,28 +149,47 @@ def get_related_forums_by_selenium(keyword):
     options = Options()
     options.headless = True
     browser = webdriver.Chrome(CHROMEDRIVER_PATH, chrome_options=options)
+    # browser = webdriver.Chrome(CHROMEDRIVER_PATH)
     browser.get('http://c.tieba.baidu.com/')
 
+    keyword_list = keyword.split()  # filter(None,str.split(" "))
+    keyword_list.append(keyword)
+    relevant_forums_title = []
+    # browser.implicitly_wait(1)  # time intervals given for scrapy to crawl
+    # search_textbox = browser.find_element_by_id("wd1")
+    for kw in keyword_list:
+        forums = []
+        forums = get_related_forum_one_kw(browser, kw)
+        relevant_forums_title = relevant_forums_title + forums
+    # browser.quit()
+
+    return set(relevant_forums_title)
+
+
+def get_related_forum_one_kw(browser, keyword):
     search_textbox = browser.find_element_by_id("wd1")
+    search_textbox.clear()
     search_textbox.send_keys(keyword)
+    time.sleep(1)  # for fully rendering js
+    # relevant_forums_title = []
+    # relevant_forums_webelements = []
+    # relevant_forums_data = []
+    webelements_json = []
     # relevant_forums_webelements = browser.find_elements_by_css_selector(
     #     ".forum_name , .highlight")
     # relevant_forums_title = [forum.text for index, forum in enumerate(
+
     #     relevant_forums_webelements) if index % 2 == 0 or index > 7]
     relevant_forums_webelements = browser.find_elements_by_css_selector(
         ".suggestion_list > li")
     relevant_forums_data = [webelement.get_attribute(
         "data-field") for webelement in relevant_forums_webelements]
-    webelements_json = []
-    for webelement_json in relevant_forums_data:
-        temp = json.loads(str(webelement_json))
-        # if str(temp['sugType']) in ["forum_item"]:
-        #     print(temp['sugValue'])
-        webelements_json.append(temp)
-    relevant_forums_title = [webelement_json['sugValue'] +
-                             '吧' for webelement_json in webelements_json if str(webelement_json['sugType']) in ["forum_item"]]
-    browser.quit()
-
+    if relevant_forums_data is not []:
+        for webelement_json in relevant_forums_data:
+            temp = json.loads(str(webelement_json))
+            webelements_json.append(temp)
+        relevant_forums_title = [webelement_json['sugValue'] +
+                                 '吧' for webelement_json in webelements_json if str(webelement_json['sugType']) in ["forum_item"]]
     return relevant_forums_title
 
 
@@ -183,11 +201,12 @@ def crawl(request):
         global keyword, start_date, end_date, folder_name
 
         # remove the 'ba' character as it leads to a different link
-        keyword = request.POST.get('keyword', None)[:-1]
+        keyword_full = request.POST.get('keyword', None)
+        keyword = keyword_full[:-1]
         start_date = request.POST.get('start_date', None)
         end_date = request.POST.get('end_date', None)
         if keyword and start_date and end_date:
-            folder_name = create_directory(keyword, start_date, end_date)
+            folder_name = create_directory(keyword_full, start_date, end_date)
             task_id, unique_id, status = schedule(
                 keyword, start_date, end_date, folder_name)
             print(task_id, unique_id, status)
@@ -259,11 +278,8 @@ def cancel(request):
     # print('------------------------------')
     # print(task)
     global task, keyword, start_date, end_date, folder_name
-
     scrapyd.cancel('default', task)
-
     all_forums, download_folder = process_download_folder(folder_name)
-
     context = {
         'keyword': keyword,
         'start_date': start_date,
@@ -272,16 +288,5 @@ def cancel(request):
         'forums': all_forums,
         'folder': download_folder  # not empty only if there are downloads
     }
-
-    # context = {
-    #     'keyword': 'blah blah blah BA',
-    #     'start_date': '2019-06',
-    #     'end_date': '2019-07',
-    #     'success': '',
-    #     'forums': ['a', 'b'],
-    #     'folder': 'blah blah folder'  # not empty only if there are downloads
-    # }
-
     keyword = start_date = end_date = folder_name = ''
-
     return render(request, 'main/result.html', context)

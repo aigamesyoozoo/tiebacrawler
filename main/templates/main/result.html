@@ -1,36 +1,65 @@
 {% extends 'main/base.html' %} {% block content %}
 
-<div class="alert alert-success crawl_message" role="alert">
-  <h4 class="alert-heading">Download Complete!</h4>
-  <br />
-  <p>
-    We have downloaded for you the comments, replies and list of tiebas among
-    users who had posted in <b>{{ keyword }}吧</b> from <b>{{ start_date }}</b> to
-    <b>{{ end_date }}</b>.
-  </p>
+{% if folder %}
+  <div class="alert alert-success crawl_message" role="alert">
+    {% if success %}
+      <h4 class="alert-heading">Crawling Complete!</h4>
+      <br />
+      <p>
+        We have crawled for you the posts, comments, replies and list of tiebas among
+        users who had posted in <b>{{ keyword }}吧</b> from <b>{{ start_date }}</b> to
+        <b>{{ end_date }}</b>.
+      </p>
+    {% else %}
+      <h4 class="alert-heading">Crawling Cancelled</h4>
+        <br />
+        <p>
+          Crawling for <b>{{ keyword }}吧</b> from <b>{{ start_date }}</b> to <b>{{ end_date }}</b>
+          was cancelled. Some posts, comments, replies and list of tiebas among
+          users who had posted in <b>{{ keyword }}吧</b> from <b>{{ start_date }}</b> to
+          <b>{{ end_date }}</b> were crawled.
+        </p>
+    {% endif %}
 
-  <p>
-    The .csv files can be found in your directory. <i>{{ path }}</i>
-    <ul>
-      <li><a href="/downloads/comments.csv">comments.csv</a></li>
-    </ul>
-  </p>
-</div>
+      <p>Download the data: <a href="/downloads/{{folder}}/{{folder}}.zip">{{ folder }}.zip</a>
+      </p>
+  </div>
 
-<div class="wrapper">
-  <h2>Popular Forums/Tieba</h2>
-  <p>
-    The following are the most popular forums among users who had posted in the
-    above forum on selected dates. Click on your desired tieba to select desired
-    date range for downloading.
-  </p>
-  <p>
-    <ul id="tieba_count_list">
-    {% for f in forums %}
-    <li><a href="{% url 'main:rehome' f.cleaned_name %}">{{ f.tieba }} <span class="badge badge-dark">{{ f.count }} hit{% if f.count > 1 %}s{% endif %}</span></a></li>
-    {% endfor %}
-  </ul>
-  </p>
-</div>
+  <div class="wrapper">
+    <h2>Popular Tieba</h2>
+
+    {% if forums %}
+      <p>
+        The following are the most popular tieba among users who had posted in the
+        above forum on selected dates. Click on your desired tieba to select desired
+        date range for downloading.
+      </p>
+      <p>
+        <ul id="tieba_count_list">
+        {% for f in forums %}
+          <li><a href="{% url 'main:rehome' 'abc' %}">{{ f.tieba }} <span class="badge badge-dark">{{ f.count }} hit{% if f.count > 1 %}s{% endif %}</span></a></li>
+        {% endfor %}
+        </ul>
+      </p>
+    {% else %}
+      <p>None of the users have liked other tieba.</p>
+    {% endif %}
+
+  </div>
+
+{% else %}
+
+    <div class="alert alert-warning crawl_message" role="alert">
+      {% if success %}
+        <h4 class="alert-heading">Crawling Complete...</h4>
+      {% else %}
+        <h4 class="alert-heading">Crawling Cancelled</h4>
+      {% endif %}
+      <br />
+      <p><b>No posts, comments, replies and other tiebas were found in {{ keyword }}吧 from 
+        {{ start_date }} to {{ end_date }}.</p>
+    </div>
+
+{% endif %}
 
 {% endblock %}

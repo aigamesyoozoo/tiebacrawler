@@ -1,5 +1,6 @@
 from django.urls import path
-
+from django.conf import settings
+from django.conf.urls.static import static
 from . import views
 
 app_name = 'main'
@@ -10,5 +11,7 @@ urlpatterns = [
     path('home/<str:tieba>', views.rehome, name='rehome'),
     path('crawl/', views.crawl, name='crawl'),
     path('downloading/', views.downloading, name='downloading'),
-    path('result/', views.result, name='result')
+    path('result/', views.result, name='result'),
+    path('history/', views.history, name='history'),
+    path('cancel/', views.cancel, name='cancel')
 ]

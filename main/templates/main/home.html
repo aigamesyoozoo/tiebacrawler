@@ -37,7 +37,7 @@
 
 <!-- QUERY -->
 <div id="query_segment"" class="query_box">
-  <h3>Welcome to Tieba WebScraper</h3>
+  <h3>Tieba and Date selection</h3>
   <br />
   <form
     name="query_form"
@@ -47,7 +47,7 @@
   >
     {% csrf_token %}
     {% if forums %}
-    <p>Selected forum/tieba</p>
+    <p>Tieba</p>
     <select class="form-control" name="keyword">
       {% for f in forums %}
       <option value="{{ f }}">{{ f }}</option>
@@ -93,6 +93,11 @@
       Kindly give us a moment while we complete your downloading. The more the
       available data, the longer the downloading period.
     </p>
+    <br>
+    
+    <form action="{% url 'main:cancel' %}" method="get">
+        <input type="submit" value="Cancel this task" class="btn btn-success">
+    </form>
   </div>
 
   <img
