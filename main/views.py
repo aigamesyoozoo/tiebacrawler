@@ -22,6 +22,12 @@ import json
 
 
 scrapyd = ScrapydAPI('http://localhost:6800')
+task = ''
+shared = 'abc'
+keyword = ''
+start_date = ''
+end_date = ''
+folder_name = ''
 
 
 def index(request):
@@ -58,7 +64,8 @@ def popular_tiebas_among_users_who_posted(tieba_count_path):
 # DEBUGGING ONLY
 # direct view of results.html for debugging purposes
 def result(request):
-    test_tieba_count_path = (RESULTS_PATH / '二次元_2019-03_2019-03').resolve()
+    test_tieba_count_path = (
+        RESULTS_PATH / 'python吧_2019-06_2019-08').resolve()
     all_forums = popular_tiebas_among_users_who_posted(test_tieba_count_path)
     context = {
         'forums': all_forums,
@@ -129,10 +136,12 @@ def home(request):
     keyword = request.GET.get('kw')
     tieba = request.GET.get('tieba')
     forums = []  # cater for else condition
-
     if keyword:
+        print('keyword', keyword)
         forums = get_related_forums_by_selenium(keyword)
+        # forums = ['a', 'b', 'c', 'd']
     elif tieba:
+        print('tieba', tieba)
         forums = [tieba.replace('^', '/')]
     return render(request, 'main/home.html', context={'forums': forums})
 
@@ -149,15 +158,18 @@ def get_related_forums_by_selenium(keyword):
     #     ".forum_name , .highlight")
     # relevant_forums_title = [forum.text for index, forum in enumerate(
     #     relevant_forums_webelements) if index % 2 == 0 or index > 7]
-    relevant_forums_webelements = browser.find_elements_by_css_selector(".suggestion_list > li")
-    relevant_forums_data = [webelement.get_attribute("data-field") for webelement in relevant_forums_webelements]
+    relevant_forums_webelements = browser.find_elements_by_css_selector(
+        ".suggestion_list > li")
+    relevant_forums_data = [webelement.get_attribute(
+        "data-field") for webelement in relevant_forums_webelements]
     webelements_json = []
     for webelement_json in relevant_forums_data:
         temp = json.loads(str(webelement_json))
         # if str(temp['sugType']) in ["forum_item"]:
         #     print(temp['sugValue'])
         webelements_json.append(temp)
-    relevant_forums_title = [webelement_json['sugValue']+'吧' for webelement_json in webelements_json if str(webelement_json['sugType']) in ["forum_item"]]           
+    relevant_forums_title = [webelement_json['sugValue'] +
+                             '吧' for webelement_json in webelements_json if str(webelement_json['sugType']) in ["forum_item"]]
     browser.quit()
 
     return relevant_forums_title
@@ -167,6 +179,9 @@ def get_related_forums_by_selenium(keyword):
 @require_http_methods(['POST', 'GET'])  # only get and post
 def crawl(request):
     if request.method == 'POST':
+
+        global keyword, start_date, end_date, folder_name
+
         # remove the 'ba' character as it leads to a different link
         keyword = request.POST.get('keyword', None)[:-1]
         start_date = request.POST.get('start_date', None)
@@ -182,40 +197,51 @@ def crawl(request):
             status = get_crawl_status(task_id)
             print('crawl status update loop: ', status)
 
-        # check if there are downloads
-        download_path_obj = (RESULTS_PATH / folder_name)
-        download_path_full = download_path_obj.resolve()
-        files = os.listdir(download_path_full)
-        download_folder = ''
-        all_forums = []
-        if files:
-            create_zip(download_path_full, folder_name + '.zip', files)
-            download_folder = folder_name
-            if 'tieba_count.csv' in files:
-                tieba_count_path = (download_path_obj /
-                                    'tieba_count.csv').resolve()
-                all_forums = popular_tiebas_among_users_who_posted(
-                    tieba_count_path)
+        all_forums, download_folder = process_download_folder(folder_name)
 
         context = {
             'keyword': keyword,
             'start_date': start_date,
             'end_date': end_date,
-            'status': status,
-            'forums': all_forums,
+            'success': status,
+            'forums': all_forums,  # can be empty if no forums found
             'folder': download_folder  # not empty only if there are downloads
         }
+
+        keyword = start_date = end_date = folder_name = ''
+
         return render(request, 'main/result.html', context)
+
+
+def process_download_folder(folder_name):
+    # check if there are downloads
+    download_path_obj = (RESULTS_PATH / folder_name)
+    download_path_full = download_path_obj.resolve()
+    files = os.listdir(download_path_full)
+    download_folder = ''
+    all_forums = []
+    if files:
+        create_zip(download_path_full, folder_name + '.zip', files)
+        download_folder = folder_name
+        if 'tieba_count.csv' in files:
+            tieba_count_path = (download_path_obj /
+                                'tieba_count.csv').resolve()
+            all_forums = popular_tiebas_among_users_who_posted(
+                tieba_count_path)
+
+    return all_forums, download_folder
 
 
 def create_directory(keyword, start_date, end_date):
     name = '_'.join([keyword, start_date, end_date])
-    os.chdir(RESULTS_PATH)
-    os.makedirs(name)
+    if name not in os.listdir(RESULTS_PATH):
+        os.chdir(RESULTS_PATH)
+        os.makedirs(name)
     return name
 
 
 def schedule(keyword, start_date, end_date, folder_name):
+    global task
     unique_id = str(uuid4())  # create a unique ID.
     settings = {
         'unique_id': unique_id,  # unique ID for each record for DB
@@ -228,9 +254,34 @@ def schedule(keyword, start_date, end_date, folder_name):
 def get_crawl_status(task_id):
     return scrapyd.job_status('default', task_id)
 
-def cancel(request):
-    cancelTask()
-    return render(request, 'main/result.html')
 
-def cancelTask():
-    scrapyd.cancel('default', 'tiebacrawler')
+def cancel(request):
+    # print('------------------------------')
+    # print(task)
+    global task, keyword, start_date, end_date, folder_name
+
+    scrapyd.cancel('default', task)
+
+    all_forums, download_folder = process_download_folder(folder_name)
+
+    context = {
+        'keyword': keyword,
+        'start_date': start_date,
+        'end_date': end_date,
+        'success': '',
+        'forums': all_forums,
+        'folder': download_folder  # not empty only if there are downloads
+    }
+
+    # context = {
+    #     'keyword': 'blah blah blah BA',
+    #     'start_date': '2019-06',
+    #     'end_date': '2019-07',
+    #     'success': '',
+    #     'forums': ['a', 'b'],
+    #     'folder': 'blah blah folder'  # not empty only if there are downloads
+    # }
+
+    keyword = start_date = end_date = folder_name = ''
+
+    return render(request, 'main/result.html', context)
