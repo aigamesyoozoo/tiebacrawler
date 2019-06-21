@@ -3,22 +3,30 @@
 
 <script>
   function validateDates() {
-    var start_date = document.forms["query_form"]["start_date"].value;
-    var end_date = document.forms["query_form"]["end_date"].value;
-    var text = "all ok";
-    if (start_date == "" || end_date == ""){
-      alert("Please select a start and end month.");
+    var start_date = new Date (document.forms["query_form"]["start_date_year"].value, document.forms["query_form"]["start_date_month"].value);
+    var end_date = new Date (document.forms["query_form"]["end_date_year"].value, document.forms["query_form"]["end_date_month"].value);
+    
+    if (start_date > end_date) {
+      alert("Start date should be same or earlier than end date.");
       return false;
     }
-    else if (start_date !== "" && end_date !== "") {
-      d1 = Date.parse(start_date);
-      d2 = Date.parse(end_date);
-      if (d1 > d2) {
-        console.log("d1>d2!");
-        alert("Start date should be same or earlier than end date.");
-        return false;
-      }
-    }
+
+    // var start_date = document.forms["query_form"]["start_date"].value;
+    // var end_date = document.forms["query_form"]["end_date"].value;
+    // var text = "all ok";
+    // if (start_date == "" || end_date == ""){
+    //   alert("Please select a start and end month.");
+    //   return false;
+    // }
+    // else if (start_date !== "" && end_date !== "") {
+    //   d1 = Date.parse(start_date);
+    //   d2 = Date.parse(end_date);
+    //   if (d1 > d2) {
+    //     console.log("d1>d2!");
+    //     alert("Start date should be same or earlier than end date.");
+    //     return false;
+    //   }
+    // }
     downloadView();
   }
   function downloadView() {
@@ -56,11 +64,27 @@
     <br />
 
     <p>Start Month</p>
-    <input type="month" name="start_date" class="form-control" />
+    <!-- <input type="month" name="start_date" class="form-control" /> -->
+    
+    <div class="form-inline">
+      <select id="start_date_year" name="start_date_year" class="form-control" style="margin-right:10px;">
+      </select>
+      <select id="start_date_month" name="start_date_month" class="form-control" value="7">
+      </select>
+    </div>
     <br />
+
     <p>End Month</p>
-    <input type="month" name="end_date" class="form-control" />
+    <!-- <input type="month" name="end_date" class="form-control" /> -->
+
+    <div class="form-inline">
+      <select id="end_date_year" name="end_date_year" class="form-control" style="margin-right:10px;">
+      </select>
+      <select id="end_date_month" name="end_date_month" class="form-control">
+      </select>
+    </div>
     <br />
+
     <input
       type="submit"
       value="Download Comments and Replies"
@@ -107,4 +131,42 @@
   />
   <p style="text-align:center;"><b>Downloading...</b></p>
 </div>
+
+<script>
+    var now = new Date();
+    var year_select = ['start_date_year', 'end_date_year'];
+    var month_select = ['start_date_month', 'end_date_month'];
+    year_select.forEach(createYearsOptions);
+    month_select.forEach(createMonthsOptions);
+
+    function createYearsOptions(item, index) {
+      var max = now.getFullYear();
+      var min = max-7;
+      select = document.getElementById(item);
+    
+      for (var i = max; i>=min; i--){
+        var opt = document.createElement('option');
+        opt.value = i;
+        opt.innerHTML = i;
+        select.appendChild(opt);
+      }
+    }
+
+    function createMonthsOptions(item, index) {
+      curr_month = now.getMonth()+1;
+      select = document.getElementById(item);
+    
+      for (var i = 1; i<=12; i++){
+        var opt = document.createElement('option');
+        opt.value = i.toString();
+        opt.innerHTML = i;
+        if (i == curr_month) {
+          opt.setAttribute("selected","selected");
+        }
+        select.appendChild(opt);
+      }
+    }
+
+  </script>
+
 {% endblock %}

@@ -203,33 +203,47 @@ def crawl(request):
         # remove the 'ba' character as it leads to a different link
         keyword_full = request.POST.get('keyword', None)
         keyword = keyword_full[:-1]
-        start_date = request.POST.get('start_date', None)
-        end_date = request.POST.get('end_date', None)
-        if keyword and start_date and end_date:
-            folder_name = create_directory(keyword_full, start_date, end_date)
-            task_id, unique_id, status = schedule(
-                keyword, start_date, end_date, folder_name)
-            print(task_id, unique_id, status)
+        # start_date = request.POST.get('start_date', None)
+        # end_date = request.POST.get('end_date', None)
+        start_date_year = request.POST.get('start_date_year', None)
+        start_date_month = request.POST.get('start_date_month', None)
+        if len(start_date_month) is 1:
+            start_date_month = "0" + start_date_month
+        start_date = '-'.join([start_date_year, start_date_month])
 
-        while status is not 'finished':
-            time.sleep(10)
-            status = get_crawl_status(task_id)
-            print('crawl status update loop: ', status)
+        end_date_year = request.POST.get('end_date_year', None)
+        end_date_month = request.POST.get('end_date_month', None)
+        if len(end_date_month) is 1:
+            end_date_month = "0" + end_date_month
+        end_date = '-'.join([end_date_year, end_date_month])
+        print('NEW>>>', start_date, end_date)
 
-        all_forums, download_folder = process_download_folder(folder_name)
+        # if keyword and start_date and end_date:
+        #     folder_name = create_directory(keyword_full, start_date, end_date)
+        #     task_id, unique_id, status = schedule(
+        #         keyword, start_date, end_date, folder_name)
+        #     print(task_id, unique_id, status)
 
-        context = {
-            'keyword': keyword,
-            'start_date': start_date,
-            'end_date': end_date,
-            'success': status,
-            'forums': all_forums,  # can be empty if no forums found
-            'folder': download_folder  # not empty only if there are downloads
-        }
+        # while status is not 'finished':
+        #     time.sleep(10)
+        #     status = get_crawl_status(task_id)
+        #     print('crawl status update loop: ', status)
 
-        keyword = start_date = end_date = folder_name = ''
+        # all_forums, download_folder = process_download_folder(folder_name)
 
-        return render(request, 'main/result.html', context)
+        # context = {
+        #     'keyword': keyword,
+        #     'start_date': start_date,
+        #     'end_date': end_date,
+        #     'success': status,
+        #     'forums': all_forums,  # can be empty if no forums found
+        #     'folder': download_folder  # not empty only if there are downloads
+        # }
+
+        # keyword = start_date = end_date = folder_name = ''
+
+        # return render(request, 'main/result.html', context)
+        return render(request, 'main/downloading.html')
 
 
 def process_download_folder(folder_name):
