@@ -51,12 +51,6 @@ def popular_tiebas_among_users_who_posted(tieba_count_path):
     for f in all_forums:
         # replace / with a safe character
         f['cleaned_name'] = f['tieba'].replace('/', '^')
-        # count_per_em = int(int(all_forums[0]['count']) / 4)
-        # count_per_em = 1 if count_per_em is 0 else count_per_em
-    # for f in all_forums:
-    #     f['count'] = int(int(f['count']) / count_per_em)
-    #     if f['count'] is 0:
-    #         f['count'] = 1
     return all_forums
 
 
@@ -68,7 +62,6 @@ def result(request):
     all_forums = popular_tiebas_among_users_who_posted(test_tieba_count_path)
     context = {
         'forums': all_forums,
-        # 'path': RESULTS_PATH
     }
     return render(request, 'main/result.html', context)
 
@@ -85,7 +78,6 @@ def get_history():
                 create_zip(curr_path, zip_name, files)
             folders.append(folder)
     return folders
-    # return render(request, 'main/history.html', context)
 
 
 def create_zip(curr_path, zip_name, files):
@@ -97,7 +89,6 @@ def create_zip(curr_path, zip_name, files):
 
 
 def history(request):
-
     dir_list = next(os.walk(RESULTS_PATH))[1]
     folders = []
     for folder in dir_list:
@@ -203,8 +194,6 @@ def crawl(request):
         # remove the 'ba' character as it leads to a different link
         keyword_full = request.POST.get('keyword', None)
         keyword = keyword_full[:-1]
-        # start_date = request.POST.get('start_date', None)
-        # end_date = request.POST.get('end_date', None)
         start_date_year = request.POST.get('start_date_year', None)
         start_date_month = request.POST.get('start_date_month', None)
         if len(start_date_month) is 1:
@@ -218,32 +207,32 @@ def crawl(request):
         end_date = '-'.join([end_date_year, end_date_month])
         print('NEW>>>', start_date, end_date)
 
-        # if keyword and start_date and end_date:
-        #     folder_name = create_directory(keyword_full, start_date, end_date)
-        #     task_id, unique_id, status = schedule(
-        #         keyword, start_date, end_date, folder_name)
-        #     print(task_id, unique_id, status)
+        status = 'finished'
+        if keyword and start_date and end_date:
+            folder_name = create_directory(keyword_full, start_date, end_date)
+            task_id, unique_id, status = schedule(
+                keyword, start_date, end_date, folder_name)
+            print(task_id, unique_id, status)
 
-        # while status is not 'finished':
-        #     time.sleep(10)
-        #     status = get_crawl_status(task_id)
-        #     print('crawl status update loop: ', status)
+        while status is not 'finished':
+            time.sleep(10)
+            status = get_crawl_status(task_id)
+            print('crawl status update loop: ', status)
 
-        # all_forums, download_folder = process_download_folder(folder_name)
+        all_forums, download_folder = process_download_folder(folder_name)
 
-        # context = {
-        #     'keyword': keyword,
-        #     'start_date': start_date,
-        #     'end_date': end_date,
-        #     'success': status,
-        #     'forums': all_forums,  # can be empty if no forums found
-        #     'folder': download_folder  # not empty only if there are downloads
-        # }
+        context = {
+            'keyword': keyword,
+            'start_date': start_date,
+            'end_date': end_date,
+            'success': status,
+            'forums': all_forums,  # can be empty if no forums found
+            'folder': download_folder  # not empty only if there are downloads
+        }
 
-        # keyword = start_date = end_date = folder_name = ''
+        keyword = start_date = end_date = folder_name = ''
 
-        # return render(request, 'main/result.html', context)
-        return render(request, 'main/downloading.html')
+        return render(request, 'main/result.html', context)
 
 
 def process_download_folder(folder_name):

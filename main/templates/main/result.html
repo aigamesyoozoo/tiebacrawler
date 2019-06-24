@@ -14,8 +14,7 @@
       <h4 class="alert-heading">Crawling Cancelled</h4>
         <br />
         <p>
-          Crawling for <b>{{ keyword }}吧</b> from <b>{{ start_date }}</b> to <b>{{ end_date }}</b>
-          was cancelled. Some posts, comments, replies and list of tiebas among
+          Some posts, comments, replies and list of tiebas among
           users who had posted in <b>{{ keyword }}吧</b> from <b>{{ start_date }}</b> to
           <b>{{ end_date }}</b> were crawled.
         </p>
@@ -37,7 +36,7 @@
       <p>
         <ul id="tieba_count_list">
         {% for f in forums %}
-          <li><a href="{% url 'main:rehome' 'abc' %}">{{ f.tieba }} <span class="badge badge-dark">{{ f.count }} hit{% if f.count > 1 %}s{% endif %}</span></a></li>
+          <li><a href="{% url 'main:rehome' f.cleaned_name %}">{{ f.tieba }} <span class="badge badge-dark">{{ f.count }} hit{% if f.count > 1 %}s{% endif %}</span></a></li>
         {% endfor %}
         </ul>
       </p>
@@ -60,6 +59,8 @@
         {{ start_date }} to {{ end_date }}.</p>
     </div>
 
+    <div style="display:none"></div>
 {% endif %}
 
 {% endblock %}
+<!--End of file-->

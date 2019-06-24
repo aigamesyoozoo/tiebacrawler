@@ -10,30 +10,14 @@
       alert("Start date should be same or earlier than end date.");
       return false;
     }
-
-    // var start_date = document.forms["query_form"]["start_date"].value;
-    // var end_date = document.forms["query_form"]["end_date"].value;
-    // var text = "all ok";
-    // if (start_date == "" || end_date == ""){
-    //   alert("Please select a start and end month.");
-    //   return false;
-    // }
-    // else if (start_date !== "" && end_date !== "") {
-    //   d1 = Date.parse(start_date);
-    //   d2 = Date.parse(end_date);
-    //   if (d1 > d2) {
-    //     console.log("d1>d2!");
-    //     alert("Start date should be same or earlier than end date.");
-    //     return false;
-    //   }
-    // }
     downloadView();
   }
+
   function downloadView() {
     // Values
     document.getElementById("keyword").textContent = document.forms["query_form"]["keyword"].value;
-    document.getElementById("start_date").textContent = document.forms["query_form"]["start_date"].value;
-    document.getElementById("end_date").textContent = document.forms["query_form"]["end_date"].value;
+    document.getElementById("start_date").textContent = document.forms["query_form"]["start_date_year"].value + "-" +document.forms["query_form"]["start_date_month"].value;
+    document.getElementById("end_date").textContent = document.forms["query_form"]["end_date_year"].value + "-" +document.forms["query_form"]["end_date_month"].value;
     
     // Visibility
     var download_segment = document.getElementById("download_segment");
@@ -44,7 +28,7 @@
 </script>
 
 <!-- QUERY -->
-<div id="query_segment"" class="query_box">
+<div id="query_segment" class="query_box" style="display:block;">
   <h3>Tieba and Date selection</h3>
   <br />
   <form
@@ -99,13 +83,13 @@
 </div>
 
 <!-- DOWNLOADING -->
-<div id="download_segment">
+<div id="download_segment" style="display:none;">
   <div class="alert alert-warning crawl_message" role="alert">
     <h2 class="alert-heading">Downloading in progress...</h2>
     <br />
     <p>
       Downloading comments, replies, and popular forums/tieba among users who had
-      posted:
+      posted
       <ul>
         <li>in <b><span id="keyword"></span></b></li>
         <li>from <b><span id="start_date"></span></b></li>
