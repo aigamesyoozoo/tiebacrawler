@@ -33,11 +33,19 @@ def index(request):
     history = get_history()
     history_tieba = set()
     for folder in history:
-        name = folder.split('_')[0]
-        history_tieba.add(name)
+        history_tieba.add(get_tiebaname_from_folder(folder))
     history_tieba_sorted = list(history_tieba)
     history_tieba_sorted.sort()
+    time.sleep(15)
     return render(request, 'main/index.html', context={'history': history, 'history_tieba': history_tieba_sorted})
+
+
+def get_tiebaname_from_folder(folder):
+    parts = folder.split('_')
+    if len(parts) is 3:
+        return parts[0]
+    else:
+        return '_'.join(parts[:-2])
 
 
 def downloading(request):
@@ -58,10 +66,12 @@ def popular_tiebas_among_users_who_posted(tieba_count_path):
 # direct view of results.html for debugging purposes
 def result(request):
     test_tieba_count_path = (
-        RESULTS_PATH / 'python吧_2019-06_2019-08').resolve()
+        RESULTS_PATH / 'c吧_2019-06_2019-06' / 'tieba_count.csv').resolve()
     all_forums = popular_tiebas_among_users_who_posted(test_tieba_count_path)
+    print(all_forums)
     context = {
-        'forums': all_forums,
+        'folder': 'blah blah',
+        'forums': all_forums
     }
     return render(request, 'main/result.html', context)
 
@@ -191,8 +201,8 @@ def crawl(request):
 
         global keyword, start_date, end_date, folder_name
 
-        # remove the 'ba' character as it leads to a different link
         keyword_full = request.POST.get('keyword', None)
+        # remove the 'ba' character as it leads to a different link
         keyword = keyword_full[:-1]
         start_date_year = request.POST.get('start_date_year', None)
         start_date_month = request.POST.get('start_date_month', None)
@@ -205,13 +215,13 @@ def crawl(request):
         if len(end_date_month) is 1:
             end_date_month = "0" + end_date_month
         end_date = '-'.join([end_date_year, end_date_month])
-        print('NEW>>>', start_date, end_date)
 
         status = 'finished'
         if keyword and start_date and end_date:
             folder_name = create_directory(keyword_full, start_date, end_date)
             task_id, unique_id, status = schedule(
                 keyword, start_date, end_date, folder_name)
+
             print(task_id, unique_id, status)
 
         while status is not 'finished':
@@ -281,15 +291,19 @@ def cancel(request):
     # print('------------------------------')
     # print(task)
     global task, keyword, start_date, end_date, folder_name
+
     scrapyd.cancel('default', task)
-    all_forums, download_folder = process_download_folder(folder_name)
+    all_forums, download_folder = process_download_folder(
+        folder_name)
     context = {
         'keyword': keyword,
         'start_date': start_date,
         'end_date': end_date,
-        'success': '',
+        'success': '',  # empty indicates that success message will not be printed
         'forums': all_forums,
         'folder': download_folder  # not empty only if there are downloads
     }
+
     keyword = start_date = end_date = folder_name = ''
+
     return render(request, 'main/result.html', context)
