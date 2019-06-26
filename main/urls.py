@@ -13,5 +13,7 @@ urlpatterns = [
     path('downloading/', views.downloading, name='downloading'),
     path('result/', views.result, name='result'),
     path('history/', views.history, name='history'),
-    path('cancel/', views.cancel, name='cancel')
+    path('cancel/', views.cancel, name='cancel'),
+    # path('validate/<str:folder_name>', views.validate_Isexisted, name='validate')
+    path('validate/', views.validate_Isexisted, name='validate')
 ]

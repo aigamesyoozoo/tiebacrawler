@@ -183,6 +183,40 @@ def get_related_forum_one_kw(browser, keyword):
                                  '吧' for webelement_json in webelements_json if str(webelement_json['sugType']) in ["forum_item"]]
     return relevant_forums_title
 
+# def validate_Isexisted(request, folder_name):
+#     dir_list = next(os.walk(RESULTS_PATH))[1]
+#     # folder_name = request.GET.get('folder_name', None)
+#     print(folder_name)
+#     if folder_name not in dir_list:
+#         data={
+#             'Is_existed' : False
+#         }
+#     else :
+#         data={
+#             'Is_existed' : True
+#         }
+#     return JsonResponse(data)
+@csrf_exempt
+def validate_Isexisted(request):
+    print('validate_Isexisted')
+    dir_list = next(os.walk(RESULTS_PATH))[1]
+    
+    tieba_title = request.POST.get('tieba_title', None)
+    start_date = format_date(request.POST.get('start_date_year', None), request.POST.get('start_date_month', None))
+    end_date = format_date(request.POST.get('end_date_year', None), request.POST.get('end_date_month', None))
+    folder_name = '_'.join([tieba_title, start_date, end_date])
+
+    print(folder_name)
+    if folder_name not in dir_list:
+        data={
+            'Is_existed' : False
+        }
+    else :
+        data={
+            'Is_existed' : True
+        }
+    return JsonResponse(data)
+
 
 @csrf_exempt
 @require_http_methods(['POST', 'GET'])  # only get and post
@@ -194,17 +228,20 @@ def crawl(request):
         # remove the 'ba' character as it leads to a different link
         keyword_full = request.POST.get('keyword', None)
         keyword = keyword_full[:-1]
-        start_date_year = request.POST.get('start_date_year', None)
-        start_date_month = request.POST.get('start_date_month', None)
-        if len(start_date_month) is 1:
-            start_date_month = "0" + start_date_month
-        start_date = '-'.join([start_date_year, start_date_month])
+        start_date = format_date(request.POST.get('start_date_year', None), request.POST.get('start_date_month', None))
+        end_date = format_date(request.POST.get('end_date_year', None), request.POST.get('end_date_month', None))
 
-        end_date_year = request.POST.get('end_date_year', None)
-        end_date_month = request.POST.get('end_date_month', None)
-        if len(end_date_month) is 1:
-            end_date_month = "0" + end_date_month
-        end_date = '-'.join([end_date_year, end_date_month])
+        # start_date_year = request.POST.get('start_date_year', None)
+        # start_date_month = request.POST.get('start_date_month', None)
+        # if len(start_date_month) is 1:
+        #     start_date_month = "0" + start_date_month
+        # start_date = '-'.join([start_date_year, start_date_month])
+
+        # end_date_year = request.POST.get('end_date_year', None)
+        # end_date_month = request.POST.get('end_date_month', None)
+        # if len(end_date_month) is 1:
+        #     end_date_month = "0" + end_date_month
+        # end_date = '-'.join([end_date_year, end_date_month])
         print('NEW>>>', start_date, end_date)
 
         status = 'finished'
@@ -233,6 +270,9 @@ def crawl(request):
         keyword = start_date = end_date = folder_name = ''
 
         return render(request, 'main/result.html', context)
+
+def format_date(year, month):
+    return '-'.join([year, month.zfill(2)])
 
 
 def process_download_folder(folder_name):
