@@ -54,20 +54,6 @@
       integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
       crossorigin="anonymous"
     ></script>
-    <script>
-      $(window).on('beforeunload', function(){
-        alert('Are you sure you want to leave?');
-      });
-
-      $(window).on('unload', function(){
-        $.ajax({
-        type: 'GET',
-        url: '/main/cancel/',
-
-        })
-      });
-    
-    </script>
     <main>
       <nav
         class="navbar navbar-expand-lg navbar-light"

@@ -2,25 +2,55 @@
 <link rel="stylesheet" type="text/css" href="{% static 'main/style.css' %}" />
 
 <script>
-  function validateDates() {
+  function submit_task(keyword,start_date_year,start_date_month,end_date_year,end_date_month) {
+    $.ajax({
+      type: 'POST',
+      async: false,
+      url: '/main/crawl/',
+      data: {
+        'keyword' : keyword,
+        'start_date_year' : start_date_year,
+        'start_date_month' : start_date_month,
+        'end_date_year' : end_date_year,
+        'end_date_month' : end_date_month
+      },
+      dataType: 'json',
+      success: function(data){
+        // if(data.Is_submitted){
+        //   print('Is_submitted')
+                 
+        // }
+        // else{
+        //   print('Not_submitted')
+        // }
+      }
+    })         
+  }
+
+  function validate() {
     var start_date_year = document.forms["query_form"]["start_date_year"].value;
     var start_date_month = document.forms["query_form"]["start_date_month"].value;
     var end_date_year = document.forms["query_form"]["end_date_year"].value;
     var end_date_month = document.forms["query_form"]["end_date_month"].value;
     var start_date = new Date (start_date_year, start_date_month);
     var end_date = new Date (end_date_year, end_date_month);
-    
+    var keyword = document.forms["query_form"]["keyword"].value;
+    var Is_overrided;
+
     if (start_date > end_date) {
       alert("Start date should be same or earlier than end date.");
       return false;
     }
+    else{
+      Is_overrided = true;
+    }  
     
-    var tieba_title = document.forms["query_form"]["keyword"].value;
     $.ajax({
       type: 'POST',
+      async: false,
       url: '/main/validate/',
       data: {
-        'tieba_title' : tieba_title,
+        'keyword' : keyword,
         'start_date_year' : start_date_year,
         'start_date_month' : start_date_month,
         'end_date_year' : end_date_year,
@@ -29,27 +59,46 @@
       dataType: 'json',
       success: function(data){
         if (data.Is_existed){          
-          var retVal = confirm("The selected tieba with this date range has been already crawled before, would you want to continue and override the previous data?");
-              if( retVal == true ) {
-                return true;
-              } else {
-                return false;
-              }
+          if(!confirm("The selected tieba with this date range has been already crawled before, would you want to continue and override the previous data?")) {
+            Is_overrided = false;
+          } 
+          else{
+            Is_overrided = true;
+          }
+        }
+        else{
+          Is_overrided = true;
         }
       }
     })
 
+    if(Is_overrided){     
+      submit_task(keyword,start_date_year,start_date_month,end_date_year,end_date_month);
+      downloadView();
+    }
+    else{
+      return false;
+    }
+    
+    // $.ajax({
+    //         type: 'POST',
+    //         async: false,
+    //         url: '/main/downloaded/',
+    //         susccess: function(){
+              
+    //         }
+    //       })
     
     // var start_data_string = document.forms["query_form"]["start_date_year"].value + "-" +document.forms["query_form"]["start_date_month"].value;
     // var end_date_string = document.forms["query_form"]["end_date_year"].value + "-" +document.forms["query_form"]["end_date_month"].value;
-    // var folder_name = tieba_title + "_" + start_data_string + "_" + end_date_string;
+    // var folder_name = keyword + "_" + start_data_string + "_" + end_date_string;
     // full_url = "/main/validate/"+folder_name;
     // alert(full_url);
     // $.ajax({
     //   url: full_url,
     //   //data: {
     //     //'folder_name':folder_name
-    //     // 'tieba_title' : tieba_title,
+    //     // 'keyword' : keyword,
     //     // 'start_date' : start_data_string,
     //     // 'end_date' : end_date_string
     //   //},
@@ -71,8 +120,6 @@
     //   }
     // })
     
-
-    downloadView();
   }
 
   function downloadView() {
@@ -88,28 +135,39 @@
     query_segment.style.display = "none";
   }
 
+
 // $(window).on('beforeunload', function(){
       //   alert('Are you sure you want to leave?');
       // });
 
       // Following operations will STOP current scrapy task: 
       //     closing tab, refresh page, going to another url
-      $(window).on('unload', function(){
-        $.ajax({
-        type: 'GET',
-        url: '/main/cancel/',
-        })
-      });
+  
+  
+
+  $(window).on('unload', function(){
+    $.ajax({
+    type: 'GET',
+    url: '/main/cancel/',
+    })
+  });
+
 </script>
 
 <!-- QUERY -->
 <div id="query_segment" class="query_box" style="display:block;">
   <h3>Tieba and Date selection</h3>
   <br />
-  <form
+  <!-- <form
     name="query_form"
     action="{% url 'main:crawl' %}"
     onsubmit="return validateDates()"
+    method="post"
+  > -->
+  <form
+    name="query_form"
+    action="{% url 'main:downloaded' %}"
+    onsubmit="return validate()"
     method="post"
   >
     {% csrf_token %}
