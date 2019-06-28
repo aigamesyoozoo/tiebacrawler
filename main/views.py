@@ -32,8 +32,9 @@ import pandas as pd
 
 scrapyd = ScrapydAPI('http://localhost:6800')
 
+
 def index(request):
-    
+
     history = get_history()
     history_tieba = set()
     for folder in history:
@@ -195,23 +196,26 @@ def get_related_forum_one_kw(browser, keyword):
                                  '吧' for webelement_json in webelements_json if str(webelement_json['sugType']) in ["forum_item"]]
     return relevant_forums_title
 
+
 @csrf_exempt
 def validate_Isexisted(request):
     if request.method == 'POST':
         dir_list = next(os.walk(RESULTS_PATH))[1]
-    
+
         keyword = request.POST.get('keyword', None)
-        start_date = format_date(request.POST.get('start_date_year', None), request.POST.get('start_date_month', None))
-        end_date = format_date(request.POST.get('end_date_year', None), request.POST.get('end_date_month', None))
+        start_date = format_date(request.POST.get(
+            'start_date_year', None), request.POST.get('start_date_month', None))
+        end_date = format_date(request.POST.get(
+            'end_date_year', None), request.POST.get('end_date_month', None))
         folder_name = '_'.join([keyword, start_date, end_date])
 
         if folder_name not in dir_list:
-            data={
-                'Is_existed' : False
+            data = {
+                'Is_existed': False
             }
-        else :
-            data={
-                'Is_existed' : True
+        else:
+            data = {
+                'Is_existed': True
             }
         return JsonResponse(data)
 
@@ -226,8 +230,10 @@ def crawl(request):
         keyword_full = request.POST.get('keyword', None)
         # remove the 'ba' character as it leads to a different link
         keyword = keyword_full[:-1]
-        start_date = format_date(request.POST.get('start_date_year', None), request.POST.get('start_date_month', None))
-        end_date = format_date(request.POST.get('end_date_year', None), request.POST.get('end_date_month', None))
+        start_date = format_date(request.POST.get(
+            'start_date_year', None), request.POST.get('start_date_month', None))
+        end_date = format_date(request.POST.get(
+            'end_date_year', None), request.POST.get('end_date_month', None))
         print('NEW>>>', start_date, end_date)
 
         status = 'finished'
@@ -235,7 +241,7 @@ def crawl(request):
             folder_name = create_directory(keyword_full, start_date, end_date)
             task_id, unique_id, status = schedule(
                 keyword, start_date, end_date, folder_name)
-       
+
             print(task_id, unique_id, status)
 
             request.session['task_id'] = task_id
@@ -246,23 +252,26 @@ def crawl(request):
             request.session['end_date'] = end_date
 
             data = {
-                "Is_submitted" : True,
-                "task_id" : task_id
+                "Is_submitted": True,
+                "task_id": task_id
             }
         else:
             data = {
-                "Is_submitted" : False
+                "Is_submitted": False
             }
         return JsonResponse(data)
+
 
 @csrf_exempt
 def downloaded(request):
     while request.session['status'] is not 'finished':
         time.sleep(10)
-        request.session['status'] = get_crawl_status(request, request.session['task_id'])
+        request.session['status'] = get_crawl_status(
+            request, request.session['task_id'])
         print('crawl status update loop: ', request.session['status'])
 
-    all_forums, download_folder = process_download_folder(request.session['folder_name'])
+    all_forums, download_folder = process_download_folder(
+        request.session['folder_name'])
 
     context = {
         'keyword':  request.session['keyword'],
@@ -385,7 +394,7 @@ def process_download_folder(folder_name):
 #     name = '_'.join([keyword, start_date, end_date])
 #     if name not in os.listdir(RESULTS_PATH):
 #         os.chdir(RESULTS_PATH)
-#         os.makedirs(name)        
+#         os.makedirs(name)
 #     return name
 
 def create_directory(keyword, start_date, end_date):
@@ -395,7 +404,7 @@ def create_directory(keyword, start_date, end_date):
         shutil.rmtree(name)
 
     os.chdir(RESULTS_PATH)
-    os.makedirs(name)       
+    os.makedirs(name)
     return name
 
 
@@ -412,6 +421,7 @@ def schedule(keyword, start_date, end_date, folder_name):
 
 def get_crawl_status(request, task_id):
     return scrapyd.job_status('default', request.session['task_id'])
+
 
 def delete_folder(name):
     os.chdir(RESULTS_PATH)
@@ -430,18 +440,19 @@ def cancel(request):
     #     request.session['folder_name'])
 
     context = {
-    #     'keyword':  request.session['keyword'],
-    #     'start_date': request.session['start_date'],
-    #     'end_date': request.session['end_date'],
-    #     'success': '',  # empty indicates that success message will not be printed
-    #     'forums': all_forums,
-    #     'folder': download_folder  # not empty only if there are downloads       
+        #     'keyword':  request.session['keyword'],
+        #     'start_date': request.session['start_date'],
+        #     'end_date': request.session['end_date'],
+        #     'success': '',  # empty indicates that success message will not be printed
+        #     'forums': all_forums,
+        #     'folder': download_folder  # not empty only if there are downloads
     }
 
     # keyword = start_date = end_date = folder_name = ''
-    request.session['keyword'] = request.session['start_date'] = request.session['end_date'] = request.session['folder_name'] =  request.session['task_id']=''
+    request.session['keyword'] = request.session['start_date'] = request.session[
+        'end_date'] = request.session['folder_name'] = request.session['task_id'] = ''
 
-    return render(request, 'main/cancel.html', context)
+    return render(request, 'main/dummy.html', context)
 
 
 def downloading(request):
@@ -605,4 +616,3 @@ def read_analysis_from_csv(folder):
         top_forums = {pair['tieba']: pair['count'] for pair in forums}
 
     return summary, keywords, sentiments, top_forums
-

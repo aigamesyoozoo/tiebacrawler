@@ -16,5 +16,7 @@ urlpatterns = [
     path('cancel/', views.cancel, name='cancel'),
     path('backup/', views.backup, name='backup'),
     path('api/chart/analysis', views.ChartData.as_view()),
-    path('validate/', views.validate_Isexisted, name='validate')
+    path('validate/', views.validate_Isexisted, name='validate'),
+    path('downloaded/', views.downloaded, name='downloaded'),
+    # path('weibo/', views.weibo, name='weibo')
 ]

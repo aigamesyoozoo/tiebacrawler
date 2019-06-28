@@ -3,28 +3,35 @@
 <!-- {% load static %}-->
 <!-- <link rel="stylesheet" type="text/css" href="{% static 'main/style.css' %}">-->
 
-<div class="query_box">
-  <h3>Search for Tieba</h3>
-  <br />
-  <form action="{% url 'main:home' %}" method="get">
-    <input
-      type="text"
-      name="kw"
-      placeholder="Enter keywords"
-      class="form-control"
-    /><br>
-    
-    <input
-      type="submit"
-      value="Search for relevant Tieba"
-      class="btn btn-success"
-    /><br><br>
-  </form>
+<div class="col card border-0 shadow mb-4" style="margin:50px auto;">
+  <div class="card-body">
+    <h3>Search for Tieba</h3>
+    <br />
+    <form action="{% url 'main:home' %}" method="get">
+      <input
+        type="text"
+        name="kw"
+        placeholder="Enter keywords"
+        class="form-control"
+      /><br />
+
+      <input
+        type="submit"
+        value="Search for relevant Tieba"
+        class="btn btn-success"
+      /><br /><br />
+    </form>
 
     {% if history_tieba %}
     <form action="{% url 'main:home'%}" method="get">
-      <p><i>Or search by previous tieba crawled instead:</i>
-        <select name="tieba" class="form-control" style="display:inline-block;" onchange="this.form.submit()">
+      <p>
+        <i>Or search by previous tieba crawled instead:</i>
+        <select
+          name="tieba"
+          class="form-control"
+          style="display:inline-block;"
+          onchange="this.form.submit()"
+        >
           <option disabled selected value> -- select an option -- </option>
           {% for tieba in history_tieba %}
           <option value="{{ tieba }}">{{ tieba }}</option>
@@ -33,23 +40,7 @@
       </p>
     </form>
     {% endif %}
-  
-</div>
-
-<div class="query_box">
-    <h4 style="text-align:center">History</h4>
-    <br />
-    {% if history_tieba %}
-    <ul>
-        {% for h in history %}
-        <li><a href="/downloads/{{h}}/{{h}}.zip">{{ h }}.zip</a></li>
-        {% endfor %}
-      </ul>
-      </li>
-    </ul>
-    {% else %}
-    <p>No history at the moment.</p>
-    {% endif %}
   </div>
+</div>
 
 {% endblock %}
