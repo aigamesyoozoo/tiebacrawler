@@ -1,3 +1,5 @@
+from collections import OrderedDict
+import sys
 from uuid import uuid4
 from urllib.parse import urlparse
 from django.core.validators import URLValidator
@@ -7,6 +9,9 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
+from rest_framework.views import APIView
+from rest_framework.response import Response
+# from rest_framework.decorators import api_view
 
 from GTDjango.settings import CHROMEDRIVER_PATH, TIEBACOUNT_PATH, RESULTS_PATH
 
@@ -19,6 +24,9 @@ import csv
 from pathlib import Path
 from zipfile import ZipFile
 import json
+
+from snownlp import SnowNLP
+import pandas as pd
 
 
 scrapyd = ScrapydAPI('http://localhost:6800')
@@ -36,7 +44,6 @@ def index(request):
         history_tieba.add(get_tiebaname_from_folder(folder))
     history_tieba_sorted = list(history_tieba)
     history_tieba_sorted.sort()
-    time.sleep(15)
     return render(request, 'main/index.html', context={'history': history, 'history_tieba': history_tieba_sorted})
 
 
@@ -48,12 +55,16 @@ def get_tiebaname_from_folder(folder):
         return '_'.join(parts[:-2])
 
 
-def downloading(request):
-    return render(request, 'main/downloading.html')
+def get_tieba_and_daterange_from_folder(folder):
+    parts = folder.split('_')
+    tieba = parts[0] if len(parts) is 3 else '_'.join(parts[:-2])
+    dates = '_'.join(parts[-2:])
+    return tieba, dates
 
 
 def popular_tiebas_among_users_who_posted(tieba_count_path):
-    all_forums = read_csv_as_dict_list(tieba_count_path)
+    headers = ['tieba', 'count']
+    all_forums = read_csv_as_dict_list(tieba_count_path, headers)
     if all_forums:
         all_forums.sort(key=lambda x: int(x['count']), reverse=True)
     for f in all_forums:
@@ -66,7 +77,7 @@ def popular_tiebas_among_users_who_posted(tieba_count_path):
 # direct view of results.html for debugging purposes
 def result(request):
     test_tieba_count_path = (
-        RESULTS_PATH / 'c吧_2019-06_2019-06' / 'tieba_count.csv').resolve()
+        RESULTS_PATH / 'tieba吧_2019_2019' / 'tieba_count.csv').resolve()
     all_forums = popular_tiebas_among_users_who_posted(test_tieba_count_path)
     print(all_forums)
     context = {
@@ -85,43 +96,38 @@ def get_history():
         files = os.listdir(curr_path)
         if files:
             if zip_name not in files:
-                create_zip(curr_path, zip_name, files)
+                create_zip(curr_path, zip_name)
             folders.append(folder)
     return folders
 
 
-def create_zip(curr_path, zip_name, files):
+def create_zip(curr_path, zip_name):
     os.chdir(curr_path)
+    files = os.listdir(curr_path)
     zipObj = ZipFile(zip_name, 'w')
     for f in files:
         zipObj.write(f)
     zipObj.close()
 
 
-def history(request):
-    dir_list = next(os.walk(RESULTS_PATH))[1]
-    folders = []
-    for folder in dir_list:
-        curr_path = (RESULTS_PATH / folder).resolve()
-        os.chdir(curr_path)  # only can read files (.csv) in working directory
-        files = os.listdir(curr_path)
-        if files:
-            zipObj = ZipFile(folder + '.zip', 'w')
-            for f in files:
-                zipObj.write(f)
-            zipObj.close()
-            folders.append(folder)
-    folders.sort()
-    context = {
-        'folders': folders
-    }
-    return render(request, 'main/history.html', context)
+def history(request):  # contains duplicate code with index()
+
+    history = get_history()
+    history_tieba_dict = OrderedDict()
+    for folder in history:
+        tieba, daterange = get_tieba_and_daterange_from_folder(folder)
+        if tieba not in history_tieba_dict.keys():
+            history_tieba_dict[tieba] = [daterange]
+        else:
+            history_tieba_dict[tieba].append(daterange)
+    history_tieba_dict = json.dumps(dict(history_tieba_dict))
+    return render(request, 'main/history.html', context={'history_tieba_dict': history_tieba_dict})
 
 
-def read_csv_as_dict_list(file_to_read):
+def read_csv_as_dict_list(file_to_read, headers):
     dict_list = []
     with open(file_to_read, 'r', encoding='utf-8') as f:
-        reader = csv.DictReader(f, ['tieba', 'count'])
+        reader = csv.DictReader(f, headers)
         for line in reader:
             dict_list.append(line)
     return dict_list
@@ -237,7 +243,7 @@ def crawl(request):
             'end_date': end_date,
             'success': status,
             'forums': all_forums,  # can be empty if no forums found
-            'folder': download_folder  # not empty only if there are downloads
+            'folder': download_folder,  # not empty only if there are downloads
         }
 
         keyword = start_date = end_date = folder_name = ''
@@ -245,21 +251,47 @@ def crawl(request):
         return render(request, 'main/result.html', context)
 
 
+def process_scraped_content(folder_name):
+    folder_full_path = (RESULTS_PATH / folder_name).resolve()
+    file_to_process = 'replies.csv'
+    file_to_process_full_path = (
+        RESULTS_PATH / folder_name / file_to_process).resolve()
+
+    analysis = get_keyword_summary(file_to_process_full_path)
+    summary, keywords, sentiments = format_analysis_for_csv(analysis)
+
+    write_to_csv(folder_full_path, 'summary.csv', summary)
+    write_to_csv(folder_full_path, 'keywords.csv', keywords)
+    write_to_csv(folder_full_path, 'sentiments.csv', sentiments)
+
+
 def process_download_folder(folder_name):
-    # check if there are downloads
+    '''
+    Checks if there are files in the folder.
+    If there are files, (1) create zip + return download path to the zip,
+    (2) process scraped content, and 
+    (3) return list of popular tiebas.
+    Else if there are no files at all, return None
+    '''
     download_path_obj = (RESULTS_PATH / folder_name)
     download_path_full = download_path_obj.resolve()
     files = os.listdir(download_path_full)
     download_folder = ''
     all_forums = []
+
+    if 'replies.csv' in files:
+        process_scraped_content(folder_name)
+
     if files:
-        create_zip(download_path_full, folder_name + '.zip', files)
+        create_zip(download_path_full, folder_name + '.zip')
         download_folder = folder_name
         if 'tieba_count.csv' in files:
             tieba_count_path = (download_path_obj /
                                 'tieba_count.csv').resolve()
             all_forums = popular_tiebas_among_users_who_posted(
                 tieba_count_path)
+    else:
+        os.rmdir(download_path_full)
 
     return all_forums, download_folder
 
@@ -307,3 +339,166 @@ def cancel(request):
     keyword = start_date = end_date = folder_name = ''
 
     return render(request, 'main/result.html', context)
+
+
+def downloading(request):
+    return render(request, 'main/downloading.html')
+
+
+def get_keyword_summary(file_path):
+    # variables for sentiment analysis
+    positive = 0
+    negative = 0
+    neutral = 0
+
+    # read content
+    # df = pd.read_csv(file_path, encoding='utf-8', header=None) #issue with unicode character in filepath
+    with open(file_path, 'r', encoding='utf-8') as f:
+        df = pd.read_csv(f, encoding='utf-8', header=None)
+
+    # remove replies with null value
+    df_nonull = df[pd.notnull(df[2])]
+
+    keywords = []
+    big_text = ""
+
+    # loop through each row for keyword processing for single reply
+    for text in df_nonull[2]:
+        big_text += text + "。"  # append text for summary processing later on
+        s = SnowNLP(text)  # initialize text as SnowNLP object
+
+        # sentiment analysis
+        sentiment = s.sentiments  # value for sentiments, range from 0 to 1
+        if sentiment > 0.7:
+            positive += 1
+        elif sentiment < 0.3:
+            negative += 1
+        else:
+            neutral += 1
+
+        # keyword extraction
+        key = s.keywords(5)  # get top 5 keywords of each reply
+        # loop through each keyword
+        for x in key:
+            if len(x) > 1:  # make sure keyword length is more than one, to prevent meaningless keyword
+                keywords.append(x)  # append to list
+
+    # keyword processing for whole tieba
+    # convert to dictionary for creating dataframe
+    dictionary = {'keyword': keywords}
+    keyword_df = pd.DataFrame(dictionary)  # create dataframe
+    # get the top 10 keywords of the whole tieba based on count
+    result = keyword_df.keyword.value_counts().nlargest(10, keep='first')
+
+    # summary processing for whole tieba
+    s = SnowNLP(big_text)
+    summary = s.summary(5)  # get top 5 summary (reply)
+
+    print(summary)
+    print(dict(result))
+    print(positive)
+    print(negative)
+    print(neutral)
+
+    # return a dictionary, json.dumps if needed
+    return {'summary': summary, 'keyword': dict(result), 'positive': positive, 'negative': negative, 'neutral': neutral}
+
+
+def format_analysis_for_csv(analysis):
+    summary = [[item] for item in analysis['summary']]  # list
+    keywords = [
+        keyword_and_count for keyword_and_count in analysis['keyword'].items()]
+    sentiments = [
+        ('positive', analysis['positive']),
+        ('negative', analysis['negative']),
+        ('neutral', analysis['neutral'])
+    ]
+    return summary, keywords, sentiments
+
+
+def write_to_csv(folder_full_path, filename, data):
+    os.chdir(folder_full_path)
+    with open(filename, 'w', encoding='utf-8', newline='') as f:
+        csv.writer(f, dialect="excel").writerows(data)
+
+
+def backup(request):
+
+    # download_path_full = (RESULTS_PATH / 'tieba吧' / 'replies.csv').resolve()
+    # analysis = get_keyword_summary(download_path_full)
+    analysis = {
+        'summary': ['说连接不了网络', '说连接不了网络', '有老哥可以告知一下的吗', '刚买', 'football mag 2019怎么看球员的潜力值和当前的能力值啊'],
+        'keyword': {'网络': 3, '潜力': 7, '球员': 2, '2019': 9, '老哥': 4, '下载': 1, '连接': 15},
+        'positive': 3,
+        'negative': 4,
+        'neutral': 3
+    }
+
+    context = {
+        'keyword': 'blah',
+        'start_date': '2019-2-2(hardcode)',
+        'end_date': '2019-2-2(hardcode)',
+        'success': 'success',
+        'forums': ['a', 'b', 'c', 'd'],  # can be empty if no forums found
+        'folder': 'some_download_folder',  # not empty only if there are downloads
+        'analysis': json.dumps(analysis['summary'])
+    }
+    return render(request, 'main/backup.html', context)
+
+
+class ChartData(APIView):
+    authentication_classes = []
+    permission_classes = []
+
+    def get(self, request, format=None):
+        folder = request.GET.get('folder', None)
+
+        summary, keywords, sentiments, forums = read_analysis_from_csv(
+            folder)
+
+        data = {
+            'summary': summary,
+            'keywords': keywords,
+            'sentiments': sentiments,
+            'forums': forums,
+        }
+        return Response(data)
+
+
+def read_analysis_from_csv(folder):
+    download_path_obj = (RESULTS_PATH / folder)
+    os.chdir(download_path_obj.resolve())
+    files = os.listdir(download_path_obj)
+    summary = sentiments = keywords = forums = None
+
+    if 'replies.csv' in files:
+        with open('summary.csv', newline='', encoding='utf-8') as f:
+            summary = list(csv.reader(f, delimiter=',',
+                                      quotechar='|', dialect="excel"))
+            summary = [s[0] for s in summary]
+
+        with open('sentiments.csv', 'r', encoding='utf-8') as f:
+            reader = csv.reader(f)
+            sentiments = {rows[0]: rows[1] for rows in reader}
+
+        with open('keywords.csv', 'r', encoding='utf-8') as f:
+            reader = csv.reader(f)
+            keywords = {rows[0]: rows[1] for rows in reader}
+
+    tieba_count_filename = 'tieba_count.csv'
+    if tieba_count_filename in files:
+        with open(tieba_count_filename, 'r', encoding='utf-8') as f:
+            reader = csv.reader(f)
+            forums = [{'tieba': rows[0], 'count':rows[1]} for rows in reader]
+
+        # # Too many irrelevant tiebas, take top hits will do
+        total = len(forums)
+        max = 20
+        top = max if total > max else total
+        forums = sorted(forums, key=lambda x: int(
+            x['count']), reverse=True)[:top]
+
+        # convert to simple dict for easy ref by front-end
+        top_forums = {pair['tieba']: pair['count'] for pair in forums}
+
+    return summary, keywords, sentiments, top_forums

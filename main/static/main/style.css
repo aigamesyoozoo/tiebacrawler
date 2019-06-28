@@ -1,5 +1,5 @@
-body {
-  background-color: #fafafa;
+main {
+  background-color: #f8f9fa;
 }
 .query_box {
   width: 70%;
@@ -30,6 +30,14 @@ body {
   margin: 50px auto;
   margin-top: 30px;
   text-align: center;
+  padding: 20px;
+  margin: 10px;
+  border-radius: 10px;
+  border: 1px #dddddd solid;
+}
+
+.wrapper li {
+  text-align: left;
 }
 
 #download_segment {
@@ -45,4 +53,14 @@ body {
 }
 li {
   margin-bottom: 10px;
+}
+.row {
+  margin-left: 30px !important;
+  margin-right: 30px !important;
+}
+.card {
+  border-radius: 0.8rem !important;
+}
+.mb-4 {
+  margin: 1rem !important;
 }

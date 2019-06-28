@@ -16,7 +16,7 @@
     
     <input
       type="submit"
-      value="Search for available forums/Tieba"
+      value="Search for relevant Tieba"
       class="btn btn-success"
     /><br><br>
   </form>
@@ -24,7 +24,7 @@
     {% if history_tieba %}
     <form action="{% url 'main:home'%}" method="get">
       <p><i>Or search by previous tieba crawled instead:</i>
-        <select name="tieba" style="display:inline-block;" onchange="this.form.submit()">
+        <select name="tieba" class="form-control" style="display:inline-block;" onchange="this.form.submit()">
           <option disabled selected value> -- select an option -- </option>
           {% for tieba in history_tieba %}
           <option value="{{ tieba }}">{{ tieba }}</option>

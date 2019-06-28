@@ -13,5 +13,7 @@ urlpatterns = [
     path('downloading/', views.downloading, name='downloading'),
     path('result/', views.result, name='result'),
     path('history/', views.history, name='history'),
-    path('cancel/', views.cancel, name='cancel')
+    path('cancel/', views.cancel, name='cancel'),
+    path('backup/', views.backup, name='backup'),
+    path('api/chart/analysis', views.ChartData.as_view())
 ]

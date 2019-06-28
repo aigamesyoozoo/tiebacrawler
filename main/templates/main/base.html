@@ -7,7 +7,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1, shrink-to-fit=no"
     />
-    <title>Tieba Crawler</title>
+    <title>Tieba/Weibo Crawler</title>
 
     <!--CSS-->
     {% load static %}
@@ -53,27 +53,20 @@
       integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
       crossorigin="anonymous"
     ></script>
+    <!--JQuery-->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <!--Chart.js-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.6.0/Chart.min.js"></script>
     <main>
-      <nav
-        class="navbar navbar-expand-lg navbar-light"
-        style="background-color:#F0F0F0;padding-top:10px;padding-bottom:0px;"
-      >
-        <h5>Tieba Crawler</h5>
+      <nav class="navbar navbar-expand-lg navbar-dark bg-dark navbar-fixed-top">
+        <span class="navbar-brand mb-0 h1">Tieba Weibo Crawler</span>
 
         <ul class="nav navbar-nav mr-auto">
           <li class="nav-item">
             <a class="nav-link" href="{% url 'main:index' %}">Home</a>
           </li>
           <li class="nav-item">
-            <form action="{% url 'main:home' %}" method="get">
-              <input
-                class="form-control searchbar"
-                type="text"
-                placeholder="Search tieba keywords"
-                aria-label="Search"
-                name="kw"
-              />
-            </form>
+            <a class="nav-link" href="{% url 'main:history' %}">History</a>
           </li>
         </ul>
       </nav>

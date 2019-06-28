@@ -1,15 +1,339 @@
 {% extends 'main/base.html' %} {% block content %}
 
-<div class="query_box">
-  <h2 style="text-align:center">History</h2>
-  <br />
-  <ul>
-      {% for f in folders %}
-      <li><a href="/downloads/{{f}}/{{f}}.zip">{{ f }}</a></li>
-      {% endfor %}
-    </ul>
-    </li>
-  </ul>
+<div class="row">
+  <div class="col card border-0 shadow mb-4">
+    <div class="card-body">
+      <h6>Select Tieba and Date Range</h6>
+      <hr />
+
+      <div class="row">
+        <div class="col">
+          <p>Past Tieba</p>
+        </div>
+
+        <div class="col-4">
+          <select
+            id="tieba"
+            class="form-control"
+            onchange="display_past_crawls(this.value)"
+          >
+            <option disabled selected value> -- select an option -- </option>
+          </select>
+        </div>
+
+        <div class="col">
+          <p>Past Crawls</p>
+        </div>
+
+        <div class="col-3">
+          <select id="dates" class="form-control" onchange="">
+            <option disabled selected value> -- select an option -- </option>
+          </select>
+        </div>
+
+        <div class="col">
+          <input
+            type="button"
+            value="View Analysis"
+            class="btn btn-success"
+            onclick="getAnalysis();"
+          />
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
+<!-- <div class="row">
+  <div class="col card border-0 shadow mb-4">
+    <div class="card-body">
+      <h5>Download data</h5>
+      <hr />
+      <p><a href="/downloads/folder/folder.zip">folder.zip</a></p>
+    </div>
+  </div>
+</div> -->
+
+<div class="row">
+  <!--Keywords-->
+  <div class="col card border-0 shadow mb-4">
+    <div class="card-body">
+      <h5>Keyword Analysis</h5>
+      <hr />
+      <div class="container" id="kwContainer">
+        <canvas id="keywordChart" width="400" height="400"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!--Sentiments-->
+  <div class="col card border-0 shadow mb-4">
+    <div class="card-body">
+      <h5>Sentiment Analysis</h5>
+      <hr />
+      <div class="container" id="sentiContainer">
+        <canvas id="sentimentChart" width="400" height="400"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <!--Popular Tieba-->
+  <div class="col card border-0 shadow mb-4">
+    <div class="card-body">
+      <h5>Popular Tieba</h5>
+      <hr />
+      <div
+        class="container"
+        id="popContainer"
+        style="max-height: 300px; overflow: auto;"
+      >
+        <ul id="popular" style="list-style: none; padding: 0;"></ul>
+      </div>
+    </div>
+  </div>
+
+  <!--Summary-->
+  <div class="col card border-0 shadow mb-4">
+    <div class="card-body">
+      <h5>Summary</h5>
+      <hr />
+      <div
+        class="container"
+        id="summContainer"
+        style="max-height: 300px; overflow: auto;"
+      >
+        <div>
+          <ul id="summary"></ul>
+        </div>
+      </div>
+      <br />
+    </div>
+  </div>
+</div>
+
+<script>
+  // display tiebas upon page load
+  var hist = Object.keys({{ history_tieba_dict|safe }});
+  console.log(hist);
+  create_options('tieba', hist);
+  display_past_crawls(hist[0]);
+
+  function display_past_crawls(tieba) {
+    console.log('display past>>');
+    var history = {{ history_tieba_dict|safe }}; //try to make it global so it is not reinitialized each time
+    var crawls = history[tieba];
+    create_options('dates',crawls);
+  }
+
+  function create_options(id, arr){
+    console.log('create options>>');
+    select = document.getElementById(id);
+    select.innerHTML = ''; // remove options of previous id
+
+    arr.forEach(function(element){
+      console.log(element);
+      var opt = document.createElement('option');
+      opt.value = element;
+      opt.innerHTML = element;
+      select.appendChild(opt);
+    });
+  }
+</script>
+
+<script>
+  getAnalysis();
+
+  function getAnalysis() {
+    folderName =
+      document.getElementById("tieba").value +
+      "_" +
+      document.getElementById("dates").value;
+
+    var endpoint = "/main/api/chart/analysis";
+    $.ajax({
+      method: "GET",
+      url: endpoint,
+      data: {
+        folder: folderName
+      },
+      success: function(data) {
+        var c1 = document.getElementById("popContainer");
+        var c2 = document.getElementById("summContainer");
+        var c3 = document.getElementById("sentiContainer");
+        var c4 = document.getElementById("kwContainer");
+
+        if (data.forums == null) {
+          c1.style.display = "none";
+        } else {
+          c1.style.display = "inline-block";
+          displayPopularTieba(data.forums);
+        }
+        if (data.summary == null) {
+          c2.style.display = "none";
+          c3.style.display = "none";
+          c4.style.display = "none";
+        } else {
+          c2.style.display = "inline-block";
+          c3.style.display = "inline-block";
+          c4.style.display = "inline-block";
+          displaySummary(data.summary);
+          displaySentiments(data.sentiments);
+          displayKeywords(data.keywords);
+        }
+      },
+      error: function(err) {
+        console.log("error");
+        console.log(err);
+      }
+    });
+  }
+  function displayPopularTieba(data) {
+    var ul = document.getElementById("popular");
+    Object.keys(data).forEach(function(item, index, array) {
+      console.log(item + ":");
+      console.log(data[item]);
+      var li = document.createElement("li");
+      ul.appendChild(li);
+      li.innerHTML =
+        item +
+        ' <span class="badge badge-warning">' +
+        data[item] +
+        "hits</span>";
+    });
+  }
+
+  function displaySummary(data) {
+    var ul = document.getElementById("summary");
+    data.forEach(function(item, index, array) {
+      var li = document.createElement("li");
+      ul.appendChild(li);
+      li.innerHTML = item;
+    });
+  }
+
+  function displayKeywords(data) {
+    displayBarChart(
+      "horizontalBar",
+      "keywordChart",
+      "Frequency",
+      Object.keys(data),
+      Object.values(data)
+    );
+  }
+
+  function displaySentiments(data) {
+    displayPieChart(
+      "doughnut",
+      "sentimentChart",
+      "Sentiment Analysis",
+      Object.keys(data),
+      Object.values(data)
+    );
+  }
+
+  function displayBarChart(chartType, id, title, labels, data) {
+    var ctx = document.getElementById(id);
+    var myChart = new Chart(ctx, {
+      type: chartType,
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: title,
+            data: data,
+            backgroundColor: [
+              "rgba(255, 99, 132, 0.2)",
+              "rgba(54, 162, 235, 0.2)",
+              "rgba(255, 206, 86, 0.2)",
+              "rgba(75, 192, 192, 0.2)",
+              "rgba(153, 102, 255, 0.2)",
+              "rgba(255, 159, 64, 0.2)"
+            ],
+            borderColor: [
+              "rgba(255, 99, 132, 1)",
+              "rgba(54, 162, 235, 1)",
+              "rgba(255, 206, 86, 1)",
+              "rgba(75, 192, 192, 1)",
+              "rgba(153, 102, 255, 1)",
+              "rgba(255, 159, 64, 1)"
+            ],
+            borderWidth: 1
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        scales: {
+          yAxes: [
+            {
+              ticks: {
+                beginAtZero: true,
+                fontSize: 16,
+                precision: 0
+              }
+            }
+          ],
+          xAxes: [
+            {
+              ticks: {
+                beginAtZero: true,
+                fontSize: 16,
+                callback: function(value, index, values) {
+                  if (Math.floor(value) === value) {
+                    return value;
+                  }
+                }
+              }
+            }
+          ]
+        },
+        legend: {
+          display: false
+        }
+      }
+    });
+  }
+
+  function displayPieChart(chartType, id, title, labels, data) {
+    var ctx = document.getElementById(id);
+    var myChart = new Chart(ctx, {
+      type: chartType,
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: title,
+            data: data,
+            backgroundColor: [
+              "rgba(75, 192, 192, 0.2)",
+              "rgba(255, 99, 132, 0.2)",
+              "rgba(255, 206, 86, 0.2)"
+            ],
+            borderColor: [
+              "rgba(75, 192, 192, 1)",
+              "rgba(255, 99, 132, 1)",
+              "rgba(255, 206, 86, 1)"
+            ],
+            borderWidth: 1
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+          labels: {
+            render: "percentage",
+            fontColor: ["green", "white", "red"],
+            precision: 2
+          }
+        }
+      }
+    });
+  }
+</script>
 {% endblock %}
+<!--End of file-->
