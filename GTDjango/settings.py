@@ -20,7 +20,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/2.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-#secret key removed
+
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -28,7 +28,14 @@ DEBUG = True
 # export DJANGO_DEBUG=False
 
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    # '172.29.59.75',
+    # '192.168.173.1',
+    '127.0.0.1',
+    'localhost',
+    '128.106.2.250',  # server public ip -NO USE
+    '172.29.58.100'  # server
+]
 
 
 # Application definition
@@ -41,6 +48,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [
@@ -52,6 +60,10 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+# SESSION_ENGINE = 'django.contrib.sessions.backends.signed_cookies'
+
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 ROOT_URLCONF = 'GTDjango.urls'
 
@@ -82,6 +94,17 @@ DATABASES = {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
+}
+
+
+REST_FRAMEWORK = {
+    'DEFAULT_RENDERER_CLASSES': (
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
+    ),
+    'DEFAULT_PARSER_CLASSES': (
+        'rest_framework.parsers.JSONParser',
+    )
 }
 
 
@@ -134,6 +157,6 @@ CHROMEDRIVER_PATH = r'C:\Program Files\Chromedriver\chromedriver.exe'
 # rel_path_results = '../results/'
 # rel_path_tiebacount = rel_path_results + 'tieba_count.csv'
 # TIEBACOUNT_PATH = os.path.join(script_dir, rel_path_tiebacount)
-#using Path
+# using Path
 
 DOWNLOAD_URL = '/downloads/'
