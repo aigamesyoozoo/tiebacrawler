@@ -1,0 +1,22 @@
+BOTH:
+cd C:\Users\User\Documents\5. CODE\PyCharmProjects\tiebacrawler
+
+conda deactivate
+
+.\venv\Scripts\activate
+
+
+DJANGO:
+py manage.py runserver 0.0.0.0:8000
+
+
+
+SCRAPY:
+cd webcrawler
+
+scrapyd
+
+
+ADMIN
+user: admin
+pass: 123
