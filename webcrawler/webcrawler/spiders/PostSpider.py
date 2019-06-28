@@ -177,7 +177,8 @@ class PostSpider(scrapy.Spider):
     def parse_user_related_tieba(self, response):
         following_tieba_sel = Selector(response).css(
             '.u-f-item::text').extract()
-        posting_tieba_sel = Selector(response).css('.n_name::text').extract()
+        posting_tieba_sel = Selector(response).css('.n_name::attr(title)').extract()
+        posting_tieba_sel = [sel +'吧' for sel in posting_tieba_sel]
         tiebas = following_tieba_sel + posting_tieba_sel
 
         # print('-----------------------Spider-tieba-------------------------------')

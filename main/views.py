@@ -24,20 +24,16 @@ import csv
 from pathlib import Path
 from zipfile import ZipFile
 import json
+import shutil
 
 from snownlp import SnowNLP
 import pandas as pd
 
 
 scrapyd = ScrapydAPI('http://localhost:6800')
-task = ''
-keyword = ''
-start_date = ''
-end_date = ''
-folder_name = ''
-
 
 def index(request):
+    
     history = get_history()
     history_tieba = set()
     for folder in history:
@@ -199,56 +195,145 @@ def get_related_forum_one_kw(browser, keyword):
                                  '吧' for webelement_json in webelements_json if str(webelement_json['sugType']) in ["forum_item"]]
     return relevant_forums_title
 
+@csrf_exempt
+def validate_Isexisted(request):
+    if request.method == 'POST':
+        dir_list = next(os.walk(RESULTS_PATH))[1]
+    
+        keyword = request.POST.get('keyword', None)
+        start_date = format_date(request.POST.get('start_date_year', None), request.POST.get('start_date_month', None))
+        end_date = format_date(request.POST.get('end_date_year', None), request.POST.get('end_date_month', None))
+        folder_name = '_'.join([keyword, start_date, end_date])
+
+        if folder_name not in dir_list:
+            data={
+                'Is_existed' : False
+            }
+        else :
+            data={
+                'Is_existed' : True
+            }
+        return JsonResponse(data)
+
 
 @csrf_exempt
 @require_http_methods(['POST', 'GET'])  # only get and post
 def crawl(request):
     if request.method == 'POST':
 
-        global keyword, start_date, end_date, folder_name
+        # global keyword, start_date, end_date, folder_name
 
         keyword_full = request.POST.get('keyword', None)
         # remove the 'ba' character as it leads to a different link
         keyword = keyword_full[:-1]
-        start_date_year = request.POST.get('start_date_year', None)
-        start_date_month = request.POST.get('start_date_month', None)
-        if len(start_date_month) is 1:
-            start_date_month = "0" + start_date_month
-        start_date = '-'.join([start_date_year, start_date_month])
-
-        end_date_year = request.POST.get('end_date_year', None)
-        end_date_month = request.POST.get('end_date_month', None)
-        if len(end_date_month) is 1:
-            end_date_month = "0" + end_date_month
-        end_date = '-'.join([end_date_year, end_date_month])
+        start_date = format_date(request.POST.get('start_date_year', None), request.POST.get('start_date_month', None))
+        end_date = format_date(request.POST.get('end_date_year', None), request.POST.get('end_date_month', None))
+        print('NEW>>>', start_date, end_date)
 
         status = 'finished'
         if keyword and start_date and end_date:
             folder_name = create_directory(keyword_full, start_date, end_date)
             task_id, unique_id, status = schedule(
                 keyword, start_date, end_date, folder_name)
-
+       
             print(task_id, unique_id, status)
 
-        while status is not 'finished':
-            time.sleep(10)
-            status = get_crawl_status(task_id)
-            print('crawl status update loop: ', status)
+            request.session['task_id'] = task_id
+            request.session['status'] = status
+            request.session['folder_name'] = folder_name
+            request.session['keyword'] = keyword
+            request.session['start_date'] = start_date
+            request.session['end_date'] = end_date
 
-        all_forums, download_folder = process_download_folder(folder_name)
+            data = {
+                "Is_submitted" : True,
+                "task_id" : task_id
+            }
+        else:
+            data = {
+                "Is_submitted" : False
+            }
+        return JsonResponse(data)
 
-        context = {
-            'keyword': keyword,
-            'start_date': start_date,
-            'end_date': end_date,
-            'success': status,
-            'forums': all_forums,  # can be empty if no forums found
-            'folder': download_folder,  # not empty only if there are downloads
-        }
+@csrf_exempt
+def downloaded(request):
+    while request.session['status'] is not 'finished':
+        time.sleep(10)
+        request.session['status'] = get_crawl_status(request, request.session['task_id'])
+        print('crawl status update loop: ', request.session['status'])
 
-        keyword = start_date = end_date = folder_name = ''
+    all_forums, download_folder = process_download_folder(request.session['folder_name'])
 
-        return render(request, 'main/result.html', context)
+    context = {
+        'keyword':  request.session['keyword'],
+        'start_date': request.session['start_date'],
+        'end_date': request.session['end_date'],
+        'success': request.session['status'],
+        'forums': all_forums,  # can be empty if no forums found
+        'folder': download_folder  # not empty only if there are downloads
+    }
+
+    request.session['keyword'] = request.session['start_date'] = request.session['end_date'] = request.session['folder_name'] = ''
+
+    return render(request, 'main/result.html', context)
+
+
+# @csrf_exempt
+# @require_http_methods(['POST', 'GET'])  # only get and post
+# def crawl(request):
+#     if request.method == 'POST':
+
+#         global keyword, start_date, end_date, folder_name
+
+#         keyword_full = request.POST.get('keyword', None)
+#         # remove the 'ba' character as it leads to a different link
+#         keyword = keyword_full[:-1]
+#         start_date = format_date(request.POST.get('start_date_year', None), request.POST.get('start_date_month', None))
+#         end_date = format_date(request.POST.get('end_date_year', None), request.POST.get('end_date_month', None))
+
+#         # start_date_year = request.POST.get('start_date_year', None)
+#         # start_date_month = request.POST.get('start_date_month', None)
+#         # if len(start_date_month) is 1:
+#         #     start_date_month = "0" + start_date_month
+#         # start_date = '-'.join([start_date_year, start_date_month])
+
+#         # end_date_year = request.POST.get('end_date_year', None)
+#         # end_date_month = request.POST.get('end_date_month', None)
+#         # if len(end_date_month) is 1:
+#         #     end_date_month = "0" + end_date_month
+#         # end_date = '-'.join([end_date_year, end_date_month])
+#         print('NEW>>>', start_date, end_date)
+
+#         status = 'finished'
+#         if keyword and start_date and end_date:
+#             folder_name = create_directory(keyword_full, start_date, end_date)
+#             task_id, unique_id, status = schedule(
+#                 keyword, start_date, end_date, folder_name)
+
+#             print(task_id, unique_id, status)
+
+#         while status is not 'finished':
+#             time.sleep(10)
+#             status = get_crawl_status(task_id)
+#             print('crawl status update loop: ', status)
+
+#         all_forums, download_folder = process_download_folder(folder_name)
+
+#         context = {
+#             'keyword': keyword,
+#             'start_date': start_date,
+#             'end_date': end_date,
+#             'success': status,
+#             'forums': all_forums,  # can be empty if no forums found
+#             'folder': download_folder  # not empty only if there are downloads
+#         }
+
+#         keyword = start_date = end_date = folder_name = ''
+
+#         return render(request, 'main/result.html', context)
+
+def format_date(year, month):
+    return '-'.join([year, month.zfill(2)])
 
 
 def process_scraped_content(folder_name):
@@ -296,16 +381,26 @@ def process_download_folder(folder_name):
     return all_forums, download_folder
 
 
+# def create_directory(keyword, start_date, end_date):
+#     name = '_'.join([keyword, start_date, end_date])
+#     if name not in os.listdir(RESULTS_PATH):
+#         os.chdir(RESULTS_PATH)
+#         os.makedirs(name)        
+#     return name
+
 def create_directory(keyword, start_date, end_date):
     name = '_'.join([keyword, start_date, end_date])
-    if name not in os.listdir(RESULTS_PATH):
-        os.chdir(RESULTS_PATH)
-        os.makedirs(name)
+    os.chdir(RESULTS_PATH)
+    if name in os.listdir(RESULTS_PATH):
+        shutil.rmtree(name)
+
+    os.chdir(RESULTS_PATH)
+    os.makedirs(name)       
     return name
 
 
 def schedule(keyword, start_date, end_date, folder_name):
-    global task
+    # global task
     unique_id = str(uuid4())  # create a unique ID.
     settings = {
         'unique_id': unique_id,  # unique ID for each record for DB
@@ -315,30 +410,38 @@ def schedule(keyword, start_date, end_date, folder_name):
     return task, unique_id, 'started'
 
 
-def get_crawl_status(task_id):
-    return scrapyd.job_status('default', task_id)
+def get_crawl_status(request, task_id):
+    return scrapyd.job_status('default', request.session['task_id'])
+
+def delete_folder(name):
+    os.chdir(RESULTS_PATH)
+    shutil.rmtree(name)
 
 
 def cancel(request):
     # print('------------------------------')
     # print(task)
-    global task, keyword, start_date, end_date, folder_name
+    # global task, keyword, start_date, end_date, folder_name
 
-    scrapyd.cancel('default', task)
-    all_forums, download_folder = process_download_folder(
-        folder_name)
+    scrapyd.cancel('default', request.session['task_id'])
+    delete_folder(request.session['folder_name'])
+
+    # all_forums, download_folder = process_download_folder(
+    #     request.session['folder_name'])
+
     context = {
-        'keyword': keyword,
-        'start_date': start_date,
-        'end_date': end_date,
-        'success': '',  # empty indicates that success message will not be printed
-        'forums': all_forums,
-        'folder': download_folder  # not empty only if there are downloads
+    #     'keyword':  request.session['keyword'],
+    #     'start_date': request.session['start_date'],
+    #     'end_date': request.session['end_date'],
+    #     'success': '',  # empty indicates that success message will not be printed
+    #     'forums': all_forums,
+    #     'folder': download_folder  # not empty only if there are downloads       
     }
 
-    keyword = start_date = end_date = folder_name = ''
+    # keyword = start_date = end_date = folder_name = ''
+    request.session['keyword'] = request.session['start_date'] = request.session['end_date'] = request.session['folder_name'] =  request.session['task_id']=''
 
-    return render(request, 'main/result.html', context)
+    return render(request, 'main/cancel.html', context)
 
 
 def downloading(request):
@@ -502,3 +605,4 @@ def read_analysis_from_csv(folder):
         top_forums = {pair['tieba']: pair['count'] for pair in forums}
 
     return summary, keywords, sentiments, top_forums
+

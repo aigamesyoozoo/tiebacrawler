@@ -15,5 +15,6 @@ urlpatterns = [
     path('history/', views.history, name='history'),
     path('cancel/', views.cancel, name='cancel'),
     path('backup/', views.backup, name='backup'),
-    path('api/chart/analysis', views.ChartData.as_view())
+    path('api/chart/analysis', views.ChartData.as_view()),
+    path('validate/', views.validate_Isexisted, name='validate')
 ]
