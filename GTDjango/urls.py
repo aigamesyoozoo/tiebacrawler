@@ -24,7 +24,4 @@ urlpatterns = [
     path('admin/', admin.site.urls)
 ]
 
-# if settings.DEBUG:
-#     urlpatterns += static.static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
-#     urlpatterns += static.static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 urlpatterns += static(settings.DOWNLOAD_URL, document_root=settings.RESULTS_PATH)

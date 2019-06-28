@@ -10,13 +10,10 @@ urlpatterns = [
     path('home/', views.home, name='home'),
     path('home/<str:tieba>', views.rehome, name='rehome'),
     path('crawl/', views.crawl, name='crawl'),
-    path('downloading/', views.downloading, name='downloading'),
-    path('result/', views.result, name='result'),
-    path('history/', views.history, name='history'),
     path('cancel/', views.cancel, name='cancel'),
-    path('backup/', views.backup, name='backup'),
-    path('api/chart/analysis', views.ChartData.as_view()),
+    path('history/', views.history, name='history'),
     path('validate/', views.validate_Isexisted, name='validate'),
     path('downloaded/', views.downloaded, name='downloaded'),
+    path('api/chart/analysis', views.ChartData.as_view()),
     # path('weibo/', views.weibo, name='weibo')
 ]

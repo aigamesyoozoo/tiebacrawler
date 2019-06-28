@@ -122,9 +122,7 @@ FEED_EXPORT_ENCODING = 'utf-8'
 
 START_DATE = datetime.datetime.strptime("2019-03", '%Y-%m').date()
 END_DATE = datetime.datetime.strptime("2019-06", '%Y-%m').date()
-NUM_TIEZI = 1000
+NUM_TIEZI = 300
 script_dir = os.path.dirname(__file__)  # <-- absolute dir the script is in
 rel_path = '../../results'
 FILE_PATH = os.path.join(script_dir, rel_path)
-
-

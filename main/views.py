@@ -11,7 +11,6 @@ from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.views import APIView
 from rest_framework.response import Response
-# from rest_framework.decorators import api_view
 
 from GTDjango.settings import CHROMEDRIVER_PATH, TIEBACOUNT_PATH, RESULTS_PATH
 
@@ -70,20 +69,6 @@ def popular_tiebas_among_users_who_posted(tieba_count_path):
     return all_forums
 
 
-# DEBUGGING ONLY
-# direct view of results.html for debugging purposes
-def result(request):
-    test_tieba_count_path = (
-        RESULTS_PATH / 'tieba吧_2019_2019' / 'tieba_count.csv').resolve()
-    all_forums = popular_tiebas_among_users_who_posted(test_tieba_count_path)
-    print(all_forums)
-    context = {
-        'folder': 'blah blah',
-        'forums': all_forums
-    }
-    return render(request, 'main/result.html', context)
-
-
 def get_history():
     dir_list = next(os.walk(RESULTS_PATH))[1]
     folders = []
@@ -108,7 +93,6 @@ def create_zip(curr_path, zip_name):
 
 
 def history(request):  # contains duplicate code with index()
-
     history = get_history()
     history_tieba_dict = OrderedDict()
     for folder in history:
@@ -153,19 +137,16 @@ def get_related_forums_by_selenium(keyword):
     options = Options()
     options.headless = True
     browser = webdriver.Chrome(CHROMEDRIVER_PATH, chrome_options=options)
-    # browser = webdriver.Chrome(CHROMEDRIVER_PATH)
     browser.get('http://c.tieba.baidu.com/')
 
-    keyword_list = keyword.split()  # filter(None,str.split(" "))
+    keyword_list = keyword.split()
     keyword_list.append(keyword)
     relevant_forums_title = []
     # browser.implicitly_wait(1)  # time intervals given for scrapy to crawl
-    # search_textbox = browser.find_element_by_id("wd1")
     for kw in keyword_list:
         forums = []
         forums = get_related_forum_one_kw(browser, kw)
         relevant_forums_title = relevant_forums_title + forums
-    # browser.quit()
 
     return set(relevant_forums_title)
 
@@ -179,11 +160,6 @@ def get_related_forum_one_kw(browser, keyword):
     # relevant_forums_webelements = []
     # relevant_forums_data = []
     webelements_json = []
-    # relevant_forums_webelements = browser.find_elements_by_css_selector(
-    #     ".forum_name , .highlight")
-    # relevant_forums_title = [forum.text for index, forum in enumerate(
-
-    #     relevant_forums_webelements) if index % 2 == 0 or index > 7]
     relevant_forums_webelements = browser.find_elements_by_css_selector(
         ".suggestion_list > li")
     relevant_forums_data = [webelement.get_attribute(
@@ -224,8 +200,6 @@ def validate_Isexisted(request):
 @require_http_methods(['POST', 'GET'])  # only get and post
 def crawl(request):
     if request.method == 'POST':
-
-        # global keyword, start_date, end_date, folder_name
 
         keyword_full = request.POST.get('keyword', None)
         # remove the 'ba' character as it leads to a different link
@@ -287,60 +261,6 @@ def downloaded(request):
     return render(request, 'main/result.html', context)
 
 
-# @csrf_exempt
-# @require_http_methods(['POST', 'GET'])  # only get and post
-# def crawl(request):
-#     if request.method == 'POST':
-
-#         global keyword, start_date, end_date, folder_name
-
-#         keyword_full = request.POST.get('keyword', None)
-#         # remove the 'ba' character as it leads to a different link
-#         keyword = keyword_full[:-1]
-#         start_date = format_date(request.POST.get('start_date_year', None), request.POST.get('start_date_month', None))
-#         end_date = format_date(request.POST.get('end_date_year', None), request.POST.get('end_date_month', None))
-
-#         # start_date_year = request.POST.get('start_date_year', None)
-#         # start_date_month = request.POST.get('start_date_month', None)
-#         # if len(start_date_month) is 1:
-#         #     start_date_month = "0" + start_date_month
-#         # start_date = '-'.join([start_date_year, start_date_month])
-
-#         # end_date_year = request.POST.get('end_date_year', None)
-#         # end_date_month = request.POST.get('end_date_month', None)
-#         # if len(end_date_month) is 1:
-#         #     end_date_month = "0" + end_date_month
-#         # end_date = '-'.join([end_date_year, end_date_month])
-#         print('NEW>>>', start_date, end_date)
-
-#         status = 'finished'
-#         if keyword and start_date and end_date:
-#             folder_name = create_directory(keyword_full, start_date, end_date)
-#             task_id, unique_id, status = schedule(
-#                 keyword, start_date, end_date, folder_name)
-
-#             print(task_id, unique_id, status)
-
-#         while status is not 'finished':
-#             time.sleep(10)
-#             status = get_crawl_status(task_id)
-#             print('crawl status update loop: ', status)
-
-#         all_forums, download_folder = process_download_folder(folder_name)
-
-#         context = {
-#             'keyword': keyword,
-#             'start_date': start_date,
-#             'end_date': end_date,
-#             'success': status,
-#             'forums': all_forums,  # can be empty if no forums found
-#             'folder': download_folder  # not empty only if there are downloads
-#         }
-
-#         keyword = start_date = end_date = folder_name = ''
-
-#         return render(request, 'main/result.html', context)
-
 def format_date(year, month):
     return '-'.join([year, month.zfill(2)])
 
@@ -390,13 +310,6 @@ def process_download_folder(folder_name):
     return all_forums, download_folder
 
 
-# def create_directory(keyword, start_date, end_date):
-#     name = '_'.join([keyword, start_date, end_date])
-#     if name not in os.listdir(RESULTS_PATH):
-#         os.chdir(RESULTS_PATH)
-#         os.makedirs(name)
-#     return name
-
 def create_directory(keyword, start_date, end_date):
     name = '_'.join([keyword, start_date, end_date])
     os.chdir(RESULTS_PATH)
@@ -429,34 +342,13 @@ def delete_folder(name):
 
 
 def cancel(request):
-    # print('------------------------------')
-    # print(task)
-    # global task, keyword, start_date, end_date, folder_name
-
     scrapyd.cancel('default', request.session['task_id'])
     delete_folder(request.session['folder_name'])
 
-    # all_forums, download_folder = process_download_folder(
-    #     request.session['folder_name'])
-
-    context = {
-        #     'keyword':  request.session['keyword'],
-        #     'start_date': request.session['start_date'],
-        #     'end_date': request.session['end_date'],
-        #     'success': '',  # empty indicates that success message will not be printed
-        #     'forums': all_forums,
-        #     'folder': download_folder  # not empty only if there are downloads
-    }
-
-    # keyword = start_date = end_date = folder_name = ''
     request.session['keyword'] = request.session['start_date'] = request.session[
         'end_date'] = request.session['folder_name'] = request.session['task_id'] = ''
 
-    return render(request, 'main/dummy.html', context)
-
-
-def downloading(request):
-    return render(request, 'main/downloading.html')
+    return render(request, 'main/cancel.html')
 
 
 def get_keyword_summary(file_path):
@@ -536,30 +428,6 @@ def write_to_csv(folder_full_path, filename, data):
         csv.writer(f, dialect="excel").writerows(data)
 
 
-def backup(request):
-
-    # download_path_full = (RESULTS_PATH / 'tieba吧' / 'replies.csv').resolve()
-    # analysis = get_keyword_summary(download_path_full)
-    analysis = {
-        'summary': ['说连接不了网络', '说连接不了网络', '有老哥可以告知一下的吗', '刚买', 'football mag 2019怎么看球员的潜力值和当前的能力值啊'],
-        'keyword': {'网络': 3, '潜力': 7, '球员': 2, '2019': 9, '老哥': 4, '下载': 1, '连接': 15},
-        'positive': 3,
-        'negative': 4,
-        'neutral': 3
-    }
-
-    context = {
-        'keyword': 'blah',
-        'start_date': '2019-2-2(hardcode)',
-        'end_date': '2019-2-2(hardcode)',
-        'success': 'success',
-        'forums': ['a', 'b', 'c', 'd'],  # can be empty if no forums found
-        'folder': 'some_download_folder',  # not empty only if there are downloads
-        'analysis': json.dumps(analysis['summary'])
-    }
-    return render(request, 'main/backup.html', context)
-
-
 class ChartData(APIView):
     authentication_classes = []
     permission_classes = []
@@ -585,7 +453,7 @@ def read_analysis_from_csv(folder):
     files = os.listdir(download_path_obj)
     summary = sentiments = keywords = forums = None
 
-    if 'replies.csv' in files:
+    if 'summary.csv' in files:
         with open('summary.csv', newline='', encoding='utf-8') as f:
             summary = list(csv.reader(f, delimiter=',',
                                       quotechar='|', dialect="excel"))
