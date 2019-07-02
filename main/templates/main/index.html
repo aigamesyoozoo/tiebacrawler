@@ -1,45 +1,46 @@
 {% extends 'main/base.html' %} {% block content %}
 
-<!-- {% load static %}-->
-<!-- <link rel="stylesheet" type="text/css" href="{% static 'main/style.css' %}">-->
+<div class="container">
+  <div class="row">
+    <div class="col card border-0 shadow mb-4" style="margin:50px auto;">
+      <div class="card-body">
+        <h3>Search for Tieba</h3>
+        <br />
+        <form action="{% url 'main:home' %}" method="get">
+          <input
+            type="text"
+            name="kw"
+            placeholder="Enter keywords"
+            class="form-control"
+          /><br />
 
-<div class="col card border-0 shadow mb-4" style="margin:50px auto;">
-  <div class="card-body">
-    <h3>Search for Tieba</h3>
-    <br />
-    <form action="{% url 'main:home' %}" method="get">
-      <input
-        type="text"
-        name="kw"
-        placeholder="Enter keywords"
-        class="form-control"
-      /><br />
+          <input
+            type="submit"
+            value="Search for relevant Tieba"
+            class="btn btn-success"
+          /><br /><br />
+        </form>
 
-      <input
-        type="submit"
-        value="Search for relevant Tieba"
-        class="btn btn-success"
-      /><br /><br />
-    </form>
-
-    {% if history_tieba %}
-    <form action="{% url 'main:home'%}" method="get">
-      <p>
-        <i>Or search by previous tieba crawled instead:</i>
-        <select
-          name="tieba"
-          class="form-control"
-          style="display:inline-block;"
-          onchange="this.form.submit()"
-        >
-          <option disabled selected value> -- select an option -- </option>
-          {% for tieba in history_tieba %}
-          <option value="{{ tieba }}">{{ tieba }}</option>
-          {% endfor %}
-        </select>
-      </p>
-    </form>
-    {% endif %}
+        {% if history_tieba %}
+        <form action="{% url 'main:home'%}" method="get">
+          <p>
+            <i>Or search by previous tieba crawled instead:</i>
+            <select
+              name="tieba"
+              class="form-control"
+              style="display:inline-block;"
+              onchange="this.form.submit()"
+            >
+              <option disabled selected value> -- select an option -- </option>
+              {% for tieba in history_tieba %}
+              <option value="{{ tieba }}">{{ tieba }}</option>
+              {% endfor %}
+            </select>
+          </p>
+        </form>
+        {% endif %}
+      </div>
+    </div>
   </div>
 </div>
 

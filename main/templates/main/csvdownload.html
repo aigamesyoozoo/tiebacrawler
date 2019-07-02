@@ -1,0 +1,27 @@
+{% extends 'main/base.html' %} {% block content %}
+
+<div class="container">
+  <div class="row">
+    <div class="col card border-0 shadow mb-4" style="margin:50px auto;">
+      <div class="card-body">
+        <h3>Download CSVs</h3>
+        <br />
+
+        {% if history %}
+        <ul>
+          {% for h in history %}
+          <li>
+            <a href="/downloads/{{ h }}/{{ h }}.zip">{{ h }}.zip</a>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+
+        <p>No history at the moment.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

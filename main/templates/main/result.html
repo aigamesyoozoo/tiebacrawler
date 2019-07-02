@@ -13,219 +13,22 @@
       </p>
   </div>
 
-  <div class="row">
+  {% include 'main/components.html' %}
 
-    <!--Keywords-->
-    <div class="col card border-0 shadow mb-4">
-        <div class="card-body">
-          <h5>Keyword Analysis</h5>
-          <hr>
-          <div class="container">
-            <canvas id="keywordChart" width="400" height="400"></canvas>
-          </div>
-        </div>
-      </div>
-      
-      <!--Sentiments-->
-      <div class="col card border-0 shadow mb-4">
-        <div class="card-body">
-          <h5>Sentiment Analysis</h5>
-          <hr>
-          <div class="container">
-            <canvas id="sentimentChart" width="400" height="400"></canvas>
-          </div>
-        </div>
-      </div>
-  </div>
-  <div class="row">
-    <!--Popular Tieba-->
-    <div class="col card border-0 shadow mb-4">
-      <div class="card-body">
-        <h4>Popular Tieba</h4>
-        <hr>
-
-        <div style="max-height: 400px; overflow: auto;">
-            {% if forums %}
-            <p>
-              Popular tiebas among users who had posted in the
-              above forum on selected dates. Click on tieba to select date range for downloading.
-            </p>
-            <p>
-              <ul id="tieba_count_list" style="list-style: none; padding: 0;">
-                {% for f in forums %}
-                <li><a href="{% url 'main:rehome' f.cleaned_name %}">{{ f.tieba }} <span class="badge badge-dark">{{ f.count }} hit{% if f.count > 1 %}s{% endif %}</span></a></li>
-                {% endfor %}
-              </ul>
-            </p>
-            {% else %}
-            <p>None of the users have liked other tieba.</p>
-            {% endif %}
-        </div>
-        </div>
-    </div>
-    
-    <!--Summary-->
-    <div class="col card border-0 shadow mb-4">
-      <div class="card-body">
-        <h5>Summary</h5>
-        <hr>
-        <div class="container" style="max-height: 400px; overflow: auto;">
-          <div>
-            <ul id="summary">
-            </ul>
-          </div>
-        </div>
-        <br>
-      </div>
-    </div>
-
-  </div>
-
-  {% else %}
-
+{% else %}
   <div class="alert alert-warning crawl_message" role="alert">
     <h4 class="alert-heading">Crawling Complete...</h4>
     <br />
     <p><b>No posts, comments, replies and other tiebas were found in {{ keyword }}吧 from 
       {{ start_date }} to {{ end_date }}.</p>
   </div>
+{% endif %}
 
-  {% endif %}
+{% load staticfiles %}
+  <script src="{% static "main/js/analysis.display.js" %}"></script>
+  <script>
+    getAnalysis("{{ folder }}");
+  </script>
 
-<script>
-    var endpoint = '/main/api/chart/analysis';
-    $.ajax({
-      method: "GET",
-      url: endpoint,
-      data: {
-        'folder': "{{ folder }}"
-      },
-      success: function(data){
-        displaySummary(data.summary)
-        displayKeywords(data.keywords)
-        displaySentiments(data.sentiments)
-        // console.log("DATA >>>>>>>>>")
-        // console.log(data)
-      },
-      error: function(err){
-        console.log("error")
-        console.log(err)
-      },
-    });
-    
-    function displaySummary(data){
-      // console.log("display SUMMARY >>>>");
-      // console.log(data);
-      var ul = document.getElementById('summary');
-      data.forEach(function(item, index, array) {
-        var li = document.createElement('li');
-        ul.appendChild(li);
-        li.innerHTML= item;
-      });
-    }
-    
-    function displayKeywords(data){
-      displayBarChart('horizontalBar', 'keywordChart', 'Frequency', Object.keys(data), Object.values(data));
-    }
-    
-    function displaySentiments(data){
-      displayPieChart('doughnut', 'sentimentChart', 'Sentiment Analysis', Object.keys(data), Object.values(data));
-    }
-    
-
-    function displayBarChart(chartType, id, title, labels, data) {
-      var ctx = document.getElementById(id);
-      var myChart = new Chart(ctx, {
-        type: chartType,
-        data: {
-            labels: labels,
-            datasets: [{
-                label: title,
-                data: data,
-                backgroundColor: [
-                    'rgba(255, 99, 132, 0.2)',
-                    'rgba(54, 162, 235, 0.2)',
-                    'rgba(255, 206, 86, 0.2)',
-                    'rgba(75, 192, 192, 0.2)',
-                    'rgba(153, 102, 255, 0.2)',
-                    'rgba(255, 159, 64, 0.2)'
-                ],
-                borderColor: [
-                    'rgba(255, 99, 132, 1)',
-                    'rgba(54, 162, 235, 1)',
-                    'rgba(255, 206, 86, 1)',
-                    'rgba(75, 192, 192, 1)',
-                    'rgba(153, 102, 255, 1)',
-                    'rgba(255, 159, 64, 1)'
-                ],
-                borderWidth: 1
-            }]
-        },
-      options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                yAxes: [{
-                    ticks: {
-                        beginAtZero: true,
-                        fontSize: 16,
-                        precision: 0,
-                    }
-                }],
-                xAxes:[{
-                  ticks: {
-                        beginAtZero: true,
-                        fontSize: 16,
-                        callback: function(value, index, values) {
-                            if (Math.floor(value) === value) {
-                                return value;
-                            }
-                        }
-                    }
-                }]
-            },
-            legend: {
-              display: false,
-            },
-        }
-      });
-    }
-
-    function displayPieChart(chartType, id, title, labels, data) {
-      var ctx = document.getElementById(id);
-      var myChart = new Chart(ctx, {
-        type: chartType,
-        data: {
-            labels: labels,
-            datasets: [{
-                label: title,
-                data: data,
-                backgroundColor: [
-                    'rgba(75, 192, 192, 0.2)',
-                    'rgba(255, 99, 132, 0.2)',
-                    'rgba(255, 206, 86, 0.2)'
-                ],
-                borderColor: [
-                    'rgba(75, 192, 192, 1)',
-                    'rgba(255, 99, 132, 1)',
-                    'rgba(255, 206, 86, 1)'
-                ],
-                borderWidth: 1
-            }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-              labels: {
-                render: 'percentage',
-                fontColor: ['green', 'white', 'red'],
-                precision: 2
-              }
-            }
-        }
-      });
-    }
-</script>
 {% endblock %}
-<!--End of file-->
+

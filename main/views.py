@@ -33,7 +33,6 @@ scrapyd = ScrapydAPI('http://localhost:6800')
 
 
 def index(request):
-
     history = get_history()
     history_tieba = set()
     for folder in history:
@@ -108,7 +107,7 @@ def history(request):  # contains duplicate code with index()
 def read_csv_as_dict_list(file_to_read, headers):
     dict_list = []
     with open(file_to_read, 'r', encoding='utf-8') as f:
-        reader = csv.DictReader(f, headers)
+        reader = [l for l in csv.DictReader(f, headers) if l]
         for line in reader:
             dict_list.append(line)
     return dict_list
@@ -245,14 +244,12 @@ def downloaded(request):
         print('crawl status update loop: ', request.session['status'])
 
     all_forums, download_folder = process_download_folder(
-        request.session['folder_name'])
+        request.session['folder_name'])  # no longer using all_forums, as data is obtained by ajax instead
 
     context = {
         'keyword':  request.session['keyword'],
         'start_date': request.session['start_date'],
         'end_date': request.session['end_date'],
-        'success': request.session['status'],
-        'forums': all_forums,  # can be empty if no forums found
         'folder': download_folder  # not empty only if there are downloads
     }
 
@@ -352,7 +349,7 @@ def cancel(request):
 
 
 def get_keyword_summary(file_path):
-    # variables for sentiment analysis
+       # variables for sentiment analysis
     positive = 0
     negative = 0
     neutral = 0
@@ -396,24 +393,44 @@ def get_keyword_summary(file_path):
     # get the top 10 keywords of the whole tieba based on count
     result = keyword_df.keyword.value_counts().nlargest(10, keep='first')
 
+    # variables for summary processing
+    finalized_summary = []
+    replies_id = []
+    post_id = []
+
     # summary processing for whole tieba
     s = SnowNLP(big_text)
-    summary = s.summary(5)  # get top 5 summary (reply)
+    # get top 5 summary (reply), truncation might happen in the summary
+    summary = s.summary(5)
 
-    print(summary)
-    print(dict(result))
-    print(positive)
-    print(negative)
-    print(neutral)
+    # locating post and replies id
+    # remove duplicates from summary (happens on certain dataset)
+    no_dup_summary = list(set(summary))
+    for summ in no_dup_summary:
+        # search dataframe for data containing the summary, substring of the actual list
+        sum_df = df_nonull[df_nonull[2].str.contains(summ, na=False)]
 
+        # loop through each of the dataframe, if the substring is short, might increase the number of summary found by a lot
+        for i in range(sum_df.shape[0]):
+            post_id.append(sum_df.iloc[i][0])  # post id
+            replies_id.append(sum_df.iloc[i][1])  # replies id
+            # summary, obtain it again since we have removed duplicates
+            finalized_summary.append(sum_df.iloc[i][2])
+
+    print('FINALIZED SUMMARY >>>>>>')
+    for a in finalized_summary:
+        print(a)
+    for a in replies_id:
+        print(a)
     # return a dictionary, json.dumps if needed
-    return {'summary': summary, 'keyword': dict(result), 'positive': positive, 'negative': negative, 'neutral': neutral}
+    return {'post_id': post_id, 'replies_id': replies_id, 'summary': finalized_summary, 'keyword': dict(result), 'positive': positive, 'negative': negative, 'neutral': neutral}
 
 
 def format_analysis_for_csv(analysis):
-    summary = [[item] for item in analysis['summary']]  # list
+    summary = [(item, analysis['post_id'][index], analysis['replies_id'][index])
+               for index, item in enumerate(analysis['summary'])]
     keywords = [
-        keyword_and_count for keyword_and_count in analysis['keyword'].items()]
+        keyword_and_count for keyword_and_count in analysis['keyword'].items()]  # list of dict
     sentiments = [
         ('positive', analysis['positive']),
         ('negative', analysis['negative']),
@@ -447,17 +464,66 @@ class ChartData(APIView):
         return Response(data)
 
 
+class HistoryData(APIView):
+    authentication_classes = []
+    permission_classes = []
+
+    def get(self, request, format=None):
+
+        history = get_history()
+        history_tieba_dict = OrderedDict()
+        for folder in history:
+            tieba, daterange = get_tieba_and_daterange_from_folder(folder)
+            if tieba not in history_tieba_dict.keys():
+                history_tieba_dict[tieba] = [daterange]
+            else:
+                history_tieba_dict[tieba].append(daterange)
+        data = dict(history_tieba_dict)
+
+        return Response(data)
+
+
+class KeywordSearchData(APIView):
+    authentication_classes = []
+    permission_classes = []
+
+    def get(self, request, format=None):
+        folder = request.GET.get('folder', None)
+        search_input = request.GET.get('search_input', None).strip()
+        keywords_with_frequency = None
+        MAX = 10
+
+        if folder and search_input and folderExists(folder):
+            file_path = (RESULTS_PATH / folder / 'replies.csv').resolve()
+            # keywords = search_input.split()
+            # remove duplicates
+            keywords = list(dict.fromkeys(search_input.split()))
+            keywords = keywords[:min(MAX, len(keywords))]
+            keywords_with_frequency = get_frequency_from_string_input(
+                file_path, keywords)
+
+        return Response(keywords_with_frequency)
+
+
+def folderExists(folder):
+    history = get_history()
+    if not history or folder not in history:
+        return False
+    return True
+
+
 def read_analysis_from_csv(folder):
     download_path_obj = (RESULTS_PATH / folder)
     os.chdir(download_path_obj.resolve())
     files = os.listdir(download_path_obj)
     summary = sentiments = keywords = forums = None
+    url_template = 'https://tieba.baidu.com/p/%s#post_content_%s'
 
     if 'summary.csv' in files:
         with open('summary.csv', newline='', encoding='utf-8') as f:
             summary = list(csv.reader(f, delimiter=',',
                                       quotechar='|', dialect="excel"))
-            summary = [s[0] for s in summary]
+            summary = [(s[0], url_template % (s[1], s[2])) for s in summary]
 
         with open('sentiments.csv', 'r', encoding='utf-8') as f:
             reader = csv.reader(f)
@@ -484,3 +550,25 @@ def read_analysis_from_csv(folder):
         top_forums = {pair['tieba']: pair['count'] for pair in forums}
 
     return summary, keywords, sentiments, top_forums
+
+
+def csvdownload(request):
+    history = get_history()
+    return render(request, 'main/csvdownload.html', context={'history': history})
+
+
+def get_frequency_from_string_input(file_path, input_list):
+    counter = {}
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            df = pd.read_csv(f, encoding='utf-8', header=None)
+
+        df_nonull = df[pd.notnull(df[2])]
+        df_nonull.head()
+        counter = {}
+        for i in input_list:
+            count_df = df_nonull[df_nonull[2].str.contains(i, na=False)]
+            counter.update({i: len(count_df)})
+    except:
+        print(sys.exc_info()[0])
+    return counter
