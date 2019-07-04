@@ -67,7 +67,14 @@
             <a class="nav-link" href="{% url 'main:index' %}">Home</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="{% url 'main:history' %}">History</a>
+            <a class="nav-link" href="{% url 'main:history_tieba' %}"
+              >History-Tieba</a
+            >
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'main:history_weibo' %}"
+              >History-Weibo</a
+            >
           </li>
           <li class="nav-item">
             <a class="nav-link" href="{% url 'main:csvdownload' %}"

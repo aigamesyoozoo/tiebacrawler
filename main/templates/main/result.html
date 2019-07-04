@@ -13,7 +13,7 @@
       </p>
   </div>
 
-  {% include 'main/components.html' %}
+  {% include 'main/components_tieba.html' %}
 
 {% else %}
   <div class="alert alert-warning crawl_message" role="alert">
@@ -25,7 +25,7 @@
 {% endif %}
 
 {% load staticfiles %}
-  <script src="{% static "main/js/analysis.display.js" %}"></script>
+  <script src="{% static "main/js/analysis.tieba.display.js" %}"></script>
   <script>
     getAnalysis("{{ folder }}");
   </script>

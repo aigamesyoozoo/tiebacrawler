@@ -1,6 +1,8 @@
 // display tiebas upon page load
 var endpoint = "/main/api/history/tieba";
 var history_dict = {};
+var filter1 = "media";
+var filter2 = "dates";
 
 $.ajax({
   method: "GET",
@@ -17,15 +19,15 @@ $.ajax({
 
 function getFolder() {
   newFolder =
-    document.getElementById("tieba").value +
+    document.getElementById(filter1).value +
     "_" +
-    document.getElementById("dates").value;
+    document.getElementById(filter2).value;
   getAnalysis(newFolder);
 }
 
 function initializePage() {
   var hist = Object.keys(history_dict);
-  create_options("tieba", hist);
+  create_options(filter1, hist);
   display_past_crawls(hist[0]);
 }
 

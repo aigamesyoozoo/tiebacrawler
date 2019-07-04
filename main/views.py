@@ -91,17 +91,12 @@ def create_zip(curr_path, zip_name):
     zipObj.close()
 
 
-def history(request):  # contains duplicate code with index()
-    history = get_history()
-    history_tieba_dict = OrderedDict()
-    for folder in history:
-        tieba, daterange = get_tieba_and_daterange_from_folder(folder)
-        if tieba not in history_tieba_dict.keys():
-            history_tieba_dict[tieba] = [daterange]
-        else:
-            history_tieba_dict[tieba].append(daterange)
-    history_tieba_dict = json.dumps(dict(history_tieba_dict))
-    return render(request, 'main/history.html', context={'history_tieba_dict': history_tieba_dict})
+def history_tieba(request):
+    return render(request, 'main/history_tieba.html')
+
+
+def history_weibo(request):
+    return render(request, 'main/history_weibo.html')
 
 
 def read_csv_as_dict_list(file_to_read, headers):

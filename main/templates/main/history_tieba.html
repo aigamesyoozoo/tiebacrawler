@@ -1,0 +1,13 @@
+{% extends 'main/base.html' %} {% block content %}
+
+<!--Query bar-->
+{% include 'main/querybar_history.html' with title="Select Tieba and Date Range"%}
+
+<!--Components-->
+{% include 'main/components_tieba.html' %}
+
+{% load staticfiles %}
+<script src="{% static "main/js/analysis.query.js" %}"></script>
+<script src="{% static "main/js/analysis.tieba.display.js" %}"></script>
+
+{% endblock %}

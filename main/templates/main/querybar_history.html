@@ -1,16 +1,14 @@
-{% extends 'main/base.html' %} {% block content %}
-
 <!--Query-->
 <div class="row">
   <div class="col card border-0 shadow mb-4">
     <div class="card-body">
-      <h6>Select Tieba and Date Range</h6>
+      <h6>{{ title }}</h6>
       <hr />
 
       <div class="row">
         <div class="col-4">
           <select
-            id="tieba"
+            id="media"
             class="form-control"
             onchange="display_past_crawls(this.value);"
           >
@@ -27,11 +25,3 @@
     </div>
   </div>
 </div>
-
-{% include 'main/components.html' %}
-
-{% load staticfiles %}
-<script src="{% static "main/js/analysis.display.js" %}"></script>
-<script src="{% static "main/js/analysis.query.js" %}"></script>
-
-{% endblock %}

@@ -1,5 +1,6 @@
 main {
   background-color: #f8f9fa;
+  min-height: 100vh;
 }
 .query_box {
   width: 70%;
