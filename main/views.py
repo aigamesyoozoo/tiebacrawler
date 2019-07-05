@@ -12,8 +12,10 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
-from GTDjango.settings import CHROMEDRIVER_PATH, TIEBACOUNT_PATH, RESULTS_PATH
-
+from GTDjango.settings import CHROMEDRIVER_PATH, TIEBACOUNT_PATH, RESULTS_PATH, WEIBO_RESULTS_PATH
+from weibocrawler.weibo_crawler import *
+import runpy
+from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from scrapyd_api import ScrapydAPI
@@ -25,6 +27,9 @@ from zipfile import ZipFile
 import json
 import shutil
 
+import urllib.request
+from urllib.parse import quote
+import string
 from snownlp import SnowNLP
 import pandas as pd
 
@@ -33,6 +38,7 @@ scrapyd = ScrapydAPI('http://localhost:6800')
 
 
 def index(request):
+
     history = get_history()
     history_tieba = set()
     for folder in history:
@@ -56,6 +62,11 @@ def get_tieba_and_daterange_from_folder(folder):
     dates = '_'.join(parts[-2:])
     return tieba, dates
 
+def get_weibouser_and_daterange_from_folder(folder):
+    parts = folder.split('_')
+    weibouser = parts[0] if len(parts) is 3 else '_'.join(parts[:-2])
+    dates = '_'.join(parts[-2:])
+    return weibouser, dates
 
 def popular_tiebas_among_users_who_posted(tieba_count_path):
     headers = ['tieba', 'count']
@@ -81,6 +92,22 @@ def get_history():
             folders.append(folder)
     return folders
 
+def get_weibo_history():
+    '''
+    return dict for dropdown
+    key: user ,value:[date1,date2]
+    '''
+    dir_list = next(os.walk(WEIBO_RESULTS_PATH))[1]
+    weibo_history_dict = OrderedDict()
+    for folder in dir_list:
+        weibouser, daterange = get_weibouser_and_daterange_from_folder(folder)
+        if weibouser not in weibo_history_dict.keys():
+            weibo_history_dict[weibouser] = [daterange]
+        else:
+            weibo_history_dict[weibouser].append(daterange)
+    weibo_history_dict = json.dumps(dict(weibo_history_dict))
+        
+    return weibo_history_dict
 
 def create_zip(curr_path, zip_name):
     os.chdir(curr_path)
@@ -91,18 +118,23 @@ def create_zip(curr_path, zip_name):
     zipObj.close()
 
 
-def history_tieba(request):
-    return render(request, 'main/history_tieba.html')
-
-
-def history_weibo(request):
-    return render(request, 'main/history_weibo.html')
+def history(request):  # contains duplicate code with index()
+    history = get_history()
+    history_tieba_dict = OrderedDict()
+    for folder in history:
+        tieba, daterange = get_tieba_and_daterange_from_folder(folder)
+        if tieba not in history_tieba_dict.keys():
+            history_tieba_dict[tieba] = [daterange]
+        else:
+            history_tieba_dict[tieba].append(daterange)
+    history_tieba_dict = json.dumps(dict(history_tieba_dict))
+    return render(request, 'main/history.html', context={'history_tieba_dict': history_tieba_dict})
 
 
 def read_csv_as_dict_list(file_to_read, headers):
     dict_list = []
     with open(file_to_read, 'r', encoding='utf-8') as f:
-        reader = [l for l in csv.DictReader(f, headers) if l]
+        reader = csv.DictReader(f, headers)
         for line in reader:
             dict_list.append(line)
     return dict_list
@@ -125,6 +157,80 @@ def home(request):
         print('tieba', tieba)
         forums = [tieba.replace('^', '/')]
     return render(request, 'main/home.html', context={'forums': forums})
+
+# WEIBO Process Part
+def make_weibo_task(request):
+
+    if request.method == "GET":
+        keyword = request.GET.get('kw')
+        if keyword:
+            print('keyword',keyword)
+            info_dict = get_weibo_userid(keyword)
+            uid = info_dict['uid']
+            uname = info_dict['uname']
+            start_date='2019-06'
+            end_date='2019-07'
+            folder_name = create_directory_weibo(uname,start_date,end_date)
+            
+        crawl_weibo(uid,folder_name)        
+      
+    download_folder = process_download_folder_weibo(uname)
+
+    context = {
+        'keyword':  keyword,
+        'folder': download_folder  # not empty only if there are downloads
+    }
+        # import subprocess
+
+        # subprocess.run(['python', r'./weibocrawler/weibo_crawler.py', uid],stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        # runpy.run_path(r'./weibocrawler/weibo_crawler.py', run_name='__main__')
+
+    return render(request, 'main/weiboresult.html',context)
+
+
+def get_weibo_userid(keyword):
+    # url = "https://s.weibo.com/weibo?q=" + keyword +"&Refer=SWeibo_box"
+    url = "https://s.weibo.com/user?q=" + keyword # +"&Refer=SUer_box"
+    # url = quote(url, safe=string.printable)
+    url = quote(url, safe='/:?=')
+    html = urllib.request.urlopen(url).read().decode('utf-8')
+    time.sleep(0.1)
+    soup = BeautifulSoup(html,features='lxml')
+    name_elem = soup.find('a',{"class":'name'})
+    id_elem = soup.find('a',{"class":'s-btn-c'})
+    
+    info_dict = {'uname': ''.join(name_elem.em.text).strip(),'uid':str(id_elem["uid"])} #.encode('gbk')
+    print(info_dict)
+    return info_dict
+
+# TODO
+def weibo_history(request):
+    # get a lsit of dicts with {user:,date:,data:[{contents:,counts:,counts:,counts:}]}
+
+    folder_name = request.GET.get('kw')
+    weibos = get_weibos_by_user_range(folder_name)
+    # print(weibos)
+    context={
+        'weibos':weibos
+    }
+    return render(request,'main/weibohistory.html',context)
+
+def get_weibos_by_user_range(folder_name = ''):
+    all_weibos = []
+    all_cards = []
+    # dir_list = next(os.walk(WEIBO_RESULTS_PATH))[1]
+    if folder_name != '':
+        folder_name = folder_name + '/pages/'
+        curr_path = (WEIBO_RESULTS_PATH / folder_name).resolve() 
+        files = os.listdir(curr_path)
+        os.chdir(curr_path)
+        for jsonfile in files:
+            with open(jsonfile,'r', encoding='utf-8') as load_f:
+                weibos = json.load(load_f)
+                all_cards = all_cards + weibos.get('cards')
+                # print(all_cards)
+        all_weibos = [{'text' : card.get('mblog').get('text'),'reposts_count':card.get('mblog').get('reposts_count'),'comments_count':card.get('mblog').get('comments_count'),'attitudes_count':card.get('mblog').get('attitudes_count')} for card in all_cards]
+    return all_weibos
 
 
 def get_related_forums_by_selenium(keyword):
@@ -232,6 +338,7 @@ def crawl(request):
 
 @csrf_exempt
 def downloaded(request):
+    print(request.session.items())
     while request.session['status'] is not 'finished':
         time.sleep(10)
         request.session['status'] = get_crawl_status(
@@ -239,12 +346,14 @@ def downloaded(request):
         print('crawl status update loop: ', request.session['status'])
 
     all_forums, download_folder = process_download_folder(
-        request.session['folder_name'])  # no longer using all_forums, as data is obtained by ajax instead
+        request.session['folder_name'])
 
     context = {
         'keyword':  request.session['keyword'],
         'start_date': request.session['start_date'],
         'end_date': request.session['end_date'],
+        'success': request.session['status'],
+        'forums': all_forums,  # can be empty if no forums found
         'folder': download_folder  # not empty only if there are downloads
     }
 
@@ -301,6 +410,18 @@ def process_download_folder(folder_name):
 
     return all_forums, download_folder
 
+def process_download_folder_weibo(folder_name):
+    # check if there are downloads
+    download_path_obj = (WEIBO_RESULTS_PATH / folder_name)
+    download_path_full = download_path_obj.resolve()
+    files = os.listdir(download_path_full)
+    download_folder = ''
+
+    if files:
+        create_zip(download_path_full, folder_name + '.zip')
+        download_folder = folder_name
+
+    return download_folder
 
 def create_directory(keyword, start_date, end_date):
     name = '_'.join([keyword, start_date, end_date])
@@ -312,6 +433,14 @@ def create_directory(keyword, start_date, end_date):
     os.makedirs(name)
     return name
 
+def create_directory_weibo(keyword, start_date, end_date):
+    name = '_'.join([keyword, start_date, end_date])
+    os.chdir(WEIBO_RESULTS_PATH)
+    if name in os.listdir(WEIBO_RESULTS_PATH):
+        shutil.rmtree(name)
+    os.chdir(WEIBO_RESULTS_PATH)
+    os.makedirs(name)  
+    return name    
 
 def schedule(keyword, start_date, end_date, folder_name):
     # global task
@@ -344,7 +473,7 @@ def cancel(request):
 
 
 def get_keyword_summary(file_path):
-       # variables for sentiment analysis
+    # variables for sentiment analysis
     positive = 0
     negative = 0
     neutral = 0
@@ -388,44 +517,24 @@ def get_keyword_summary(file_path):
     # get the top 10 keywords of the whole tieba based on count
     result = keyword_df.keyword.value_counts().nlargest(10, keep='first')
 
-    # variables for summary processing
-    finalized_summary = []
-    replies_id = []
-    post_id = []
-
     # summary processing for whole tieba
     s = SnowNLP(big_text)
-    # get top 5 summary (reply), truncation might happen in the summary
-    summary = s.summary(5)
+    summary = s.summary(5)  # get top 5 summary (reply)
 
-    # locating post and replies id
-    # remove duplicates from summary (happens on certain dataset)
-    no_dup_summary = list(set(summary))
-    for summ in no_dup_summary:
-        # search dataframe for data containing the summary, substring of the actual list
-        sum_df = df_nonull[df_nonull[2].str.contains(summ, na=False)]
+    print(summary)
+    print(dict(result))
+    print(positive)
+    print(negative)
+    print(neutral)
 
-        # loop through each of the dataframe, if the substring is short, might increase the number of summary found by a lot
-        for i in range(sum_df.shape[0]):
-            post_id.append(sum_df.iloc[i][0])  # post id
-            replies_id.append(sum_df.iloc[i][1])  # replies id
-            # summary, obtain it again since we have removed duplicates
-            finalized_summary.append(sum_df.iloc[i][2])
-
-    print('FINALIZED SUMMARY >>>>>>')
-    for a in finalized_summary:
-        print(a)
-    for a in replies_id:
-        print(a)
     # return a dictionary, json.dumps if needed
-    return {'post_id': post_id, 'replies_id': replies_id, 'summary': finalized_summary, 'keyword': dict(result), 'positive': positive, 'negative': negative, 'neutral': neutral}
+    return {'summary': summary, 'keyword': dict(result), 'positive': positive, 'negative': negative, 'neutral': neutral}
 
 
 def format_analysis_for_csv(analysis):
-    summary = [(item, analysis['post_id'][index], analysis['replies_id'][index])
-               for index, item in enumerate(analysis['summary'])]
+    summary = [[item] for item in analysis['summary']]  # list
     keywords = [
-        keyword_and_count for keyword_and_count in analysis['keyword'].items()]  # list of dict
+        keyword_and_count for keyword_and_count in analysis['keyword'].items()]
     sentiments = [
         ('positive', analysis['positive']),
         ('negative', analysis['negative']),
@@ -459,66 +568,17 @@ class ChartData(APIView):
         return Response(data)
 
 
-class HistoryData(APIView):
-    authentication_classes = []
-    permission_classes = []
-
-    def get(self, request, format=None):
-
-        history = get_history()
-        history_tieba_dict = OrderedDict()
-        for folder in history:
-            tieba, daterange = get_tieba_and_daterange_from_folder(folder)
-            if tieba not in history_tieba_dict.keys():
-                history_tieba_dict[tieba] = [daterange]
-            else:
-                history_tieba_dict[tieba].append(daterange)
-        data = dict(history_tieba_dict)
-
-        return Response(data)
-
-
-class KeywordSearchData(APIView):
-    authentication_classes = []
-    permission_classes = []
-
-    def get(self, request, format=None):
-        folder = request.GET.get('folder', None)
-        search_input = request.GET.get('search_input', None).strip()
-        keywords_with_frequency = None
-        MAX = 10
-
-        if folder and search_input and folderExists(folder):
-            file_path = (RESULTS_PATH / folder / 'replies.csv').resolve()
-            # keywords = search_input.split()
-            # remove duplicates
-            keywords = list(dict.fromkeys(search_input.split()))
-            keywords = keywords[:min(MAX, len(keywords))]
-            keywords_with_frequency = get_frequency_from_string_input(
-                file_path, keywords)
-
-        return Response(keywords_with_frequency)
-
-
-def folderExists(folder):
-    history = get_history()
-    if not history or folder not in history:
-        return False
-    return True
-
-
 def read_analysis_from_csv(folder):
     download_path_obj = (RESULTS_PATH / folder)
     os.chdir(download_path_obj.resolve())
     files = os.listdir(download_path_obj)
     summary = sentiments = keywords = forums = None
-    url_template = 'https://tieba.baidu.com/p/%s#post_content_%s'
 
     if 'summary.csv' in files:
         with open('summary.csv', newline='', encoding='utf-8') as f:
             summary = list(csv.reader(f, delimiter=',',
                                       quotechar='|', dialect="excel"))
-            summary = [(s[0], url_template % (s[1], s[2])) for s in summary]
+            summary = [s[0] for s in summary]
 
         with open('sentiments.csv', 'r', encoding='utf-8') as f:
             reader = csv.reader(f)
@@ -545,25 +605,3 @@ def read_analysis_from_csv(folder):
         top_forums = {pair['tieba']: pair['count'] for pair in forums}
 
     return summary, keywords, sentiments, top_forums
-
-
-def csvdownload(request):
-    history = get_history()
-    return render(request, 'main/csvdownload.html', context={'history': history})
-
-
-def get_frequency_from_string_input(file_path, input_list):
-    counter = {}
-    try:
-        with open(file_path, 'r', encoding='utf-8') as f:
-            df = pd.read_csv(f, encoding='utf-8', header=None)
-
-        df_nonull = df[pd.notnull(df[2])]
-        df_nonull.head()
-        counter = {}
-        for i in input_list:
-            count_df = df_nonull[df_nonull[2].str.contains(i, na=False)]
-            counter.update({i: len(count_df)})
-    except:
-        print(sys.exc_info()[0])
-    return counter
