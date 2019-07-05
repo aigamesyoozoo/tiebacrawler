@@ -28,6 +28,10 @@ import shutil
 from snownlp import SnowNLP
 import pandas as pd
 
+from weibocrawler.weibo_crawler import *
+from bs4 import BeautifulSoup
+import urllib.request
+from urllib.parse import quote
 
 
 scrapyd = ScrapydAPI('http://localhost:6800')
@@ -56,6 +60,105 @@ def get_tieba_and_daterange_from_folder(folder):
     tieba = parts[0] if len(parts) is 3 else '_'.join(parts[:-2])
     dates = '_'.join(parts[-2:])
     return tieba, dates
+
+#To be added weibo 1
+def get_weibouser_and_daterange_from_folder(folder):
+    parts = folder.split('_')
+    weibouser = parts[0] if len(parts) is 3 else '_'.join(parts[:-2])
+    dates = '_'.join(parts[-2:])
+    return weibouser, dates
+
+#To be added weibo 2
+def get_weibo_history():
+    '''
+    return dict for dropdown
+    key: user ,value:[date1,date2]
+    '''
+    dir_list = next(os.walk(WEIBO_RESULTS_PATH))[1]
+    weibo_history_dict = OrderedDict()
+    for folder in dir_list:
+        weibouser, daterange = get_weibouser_and_daterange_from_folder(folder)
+        if weibouser not in weibo_history_dict.keys():
+            weibo_history_dict[weibouser] = [daterange]
+        else:
+            weibo_history_dict[weibouser].append(daterange)
+        
+    return weibo_history_dict
+
+#To be added weibo  3
+def make_weibo_task(request):
+
+    if request.method == "GET":
+        keyword = request.GET.get('kw')
+        if keyword:
+            print('keyword',keyword)
+            info_dict = get_weibo_userid(keyword)
+            uid = info_dict['uid']
+            uname = info_dict['uname']
+            start_date='2019-06'
+            end_date='2019-07'
+            folder_name = create_directory_weibo(uname,start_date,end_date)
+            
+        crawl_weibo(uid,folder_name)        
+      
+    download_folder = process_download_folder_weibo(uname)
+
+    context = {
+        'keyword':  keyword,
+        'folder': download_folder  # not empty only if there are downloads
+    }
+        # import subprocess
+
+        # subprocess.run(['python', r'./weibocrawler/weibo_crawler.py', uid],stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        # runpy.run_path(r'./weibocrawler/weibo_crawler.py', run_name='__main__')
+
+    return render(request, 'main/weiboresult.html',context)
+
+#To be added weibo 4
+def get_weibo_userid(keyword):
+    # url = "https://s.weibo.com/weibo?q=" + keyword +"&Refer=SWeibo_box"
+    url = "https://s.weibo.com/user?q=" + keyword # +"&Refer=SUer_box"
+    # url = quote(url, safe=string.printable)
+    url = quote(url, safe='/:?=')
+    html = urllib.request.urlopen(url).read().decode('utf-8')
+    time.sleep(0.1)
+    soup = BeautifulSoup(html,features='lxml')
+    name_elem = soup.find('a',{"class":'name'})
+    id_elem = soup.find('a',{"class":'s-btn-c'})
+    
+    info_dict = {'uname': ''.join(name_elem.em.text).strip(),'uid':str(id_elem["uid"])} #.encode('gbk')
+    print(info_dict)
+    return info_dict
+
+#To be added weibo 5
+def weibo_history(request):
+    # get a lsit of dicts with {user:,date:,data:[{contents:,counts:,counts:,counts:}]}
+
+    folder_name = request.GET.get('kw')
+    weibos = get_weibos_by_user_range(folder_name)
+    # print(weibos)
+    context={
+        'weibos':weibos
+    }
+    return render(request,'main/weibohistory.html',context)
+
+#To be added weibo 6
+def get_weibos_by_user_range(folder_name = ''):
+    all_weibos = []
+    all_cards = []
+    # dir_list = next(os.walk(WEIBO_RESULTS_PATH))[1]
+    if folder_name != '':
+        folder_name = folder_name + '/pages/'
+        curr_path = (WEIBO_RESULTS_PATH / folder_name).resolve() 
+        files = os.listdir(curr_path)
+        os.chdir(curr_path)
+        for jsonfile in files:
+            with open(jsonfile,'r', encoding='utf-8') as load_f:
+                weibos = json.load(load_f)
+                all_cards = all_cards + weibos.get('cards')
+                # print(all_cards)
+        all_weibos = [{'text' : card.get('mblog').get('text'),'reposts_count':card.get('mblog').get('reposts_count'),'comments_count':card.get('mblog').get('comments_count'),'attitudes_count':card.get('mblog').get('attitudes_count')} for card in all_cards]
+    return all_weibos
 
 
 def popular_tiebas_among_users_who_posted(tieba_count_path):
@@ -302,6 +405,19 @@ def process_download_folder(folder_name):
 
     return all_forums, download_folder
 
+#To be added weibo 7
+def process_download_folder_weibo(folder_name):
+    # check if there are downloads
+    download_path_obj = (WEIBO_RESULTS_PATH / folder_name)
+    download_path_full = download_path_obj.resolve()
+    files = os.listdir(download_path_full)
+    download_folder = ''
+
+    if files:
+        create_zip(download_path_full, folder_name + '.zip')
+        download_folder = folder_name
+
+    return download_folder
 
 def create_directory(keyword, start_date, end_date):
     name = '_'.join([keyword, start_date, end_date])
@@ -313,6 +429,17 @@ def create_directory(keyword, start_date, end_date):
     os.makedirs(name)
     return name
 
+#To be added weibo 8
+def create_directory_weibo(keyword, start_date, end_date):
+    name = '_'.join([keyword, start_date, end_date])
+    os.chdir(WEIBO_RESULTS_PATH)
+    if name in os.listdir(WEIBO_RESULTS_PATH):
+        shutil.rmtree(name)
+    os.chdir(WEIBO_RESULTS_PATH)
+    os.makedirs(name)  
+    os.chdir(WEIBO_RESULTS_PATH/name)
+    os.makedirs('pages')
+    return name   
 
 def schedule(keyword, start_date, end_date, folder_name):
     # global task
@@ -460,7 +587,7 @@ class ChartData(APIView):
         return Response(data)
 
 
-class HistoryData(APIView):
+class TiebaHistoryData(APIView):
     authentication_classes = []
     permission_classes = []
 
@@ -478,6 +605,24 @@ class HistoryData(APIView):
 
         return Response(data)
 
+# To be added weibo 9
+class WeiboHistoryData(APIView):
+    authentication_classes = []
+    permission_classes = []
+
+    def get(self, request, format=None):
+        data = get_weibo_history()
+        return Response(data)
+
+# To be added weibo 10
+class WeiboTableData(APIView):
+    authentication_classes = []
+    permission_classes = []
+
+    def get(self, request, format=None):
+        folder_name = request.GET.get('folder', None)
+        data = get_weibos_by_user_range(folder_name)
+        return Response(data)
 
 class KeywordSearchData(APIView):
     authentication_classes = []

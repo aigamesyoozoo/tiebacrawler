@@ -18,8 +18,10 @@ urlpatterns = [
  path('csvdownload/', views.csvdownload, name='csvdownload'), 
  path('api/chart/analysis/', views.ChartData.as_view()), 
  path('api/chart/keywordsearch/', views.KeywordSearchData.as_view()), 
- path('api/history/tieba/', views.HistoryData.as_view()), 
- path('api/history/weibo/', views.Jsontest.as_view()),
+ path('api/history/tieba/', views.TiebaHistoryData.as_view()), 
+ path('api/history/weibo/', views.WeiboHistoryData.as_view()),
+ path('api/table/posts/', views.WeiboTableData.as_view()), 
  path('weibo/', views.make_weibo_task, name='weibo'),
- path('weibo/history', views.weibo_history, name='weibo_history')
+#  path('weibo/history', views.weibo_history, name='weibo_history'),
+ 
  ] 
