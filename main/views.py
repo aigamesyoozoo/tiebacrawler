@@ -68,6 +68,23 @@ def get_weibouser_and_daterange_from_folder(folder):
     dates = '_'.join(parts[-2:])
     return weibouser, dates
 
+def get_weibo_history():
+    '''
+    return dict for dropdown
+    key: user ,value:[date1,date2]
+    '''
+    dir_list = next(os.walk(WEIBO_RESULTS_PATH))[1]
+    weibo_history_dict = OrderedDict()
+    for folder in dir_list:
+        weibouser, daterange = get_weibouser_and_daterange_from_folder(folder)
+        if weibouser not in weibo_history_dict.keys():
+            weibo_history_dict[weibouser] = [daterange]
+        else:
+            weibo_history_dict[weibouser].append(daterange)
+    weibo_history_dict = json.dumps(dict(weibo_history_dict))
+        
+    return weibo_history_dict
+
 def popular_tiebas_among_users_who_posted(tieba_count_path):
     headers = ['tieba', 'count']
     all_forums = read_csv_as_dict_list(tieba_count_path, headers)
@@ -92,22 +109,6 @@ def get_history():
             folders.append(folder)
     return folders
 
-def get_weibo_history():
-    '''
-    return dict for dropdown
-    key: user ,value:[date1,date2]
-    '''
-    dir_list = next(os.walk(WEIBO_RESULTS_PATH))[1]
-    weibo_history_dict = OrderedDict()
-    for folder in dir_list:
-        weibouser, daterange = get_weibouser_and_daterange_from_folder(folder)
-        if weibouser not in weibo_history_dict.keys():
-            weibo_history_dict[weibouser] = [daterange]
-        else:
-            weibo_history_dict[weibouser].append(daterange)
-    weibo_history_dict = json.dumps(dict(weibo_history_dict))
-        
-    return weibo_history_dict
 
 def create_zip(curr_path, zip_name):
     os.chdir(curr_path)
@@ -203,7 +204,6 @@ def get_weibo_userid(keyword):
     print(info_dict)
     return info_dict
 
-# TODO
 def weibo_history(request):
     # get a lsit of dicts with {user:,date:,data:[{contents:,counts:,counts:,counts:}]}
 
