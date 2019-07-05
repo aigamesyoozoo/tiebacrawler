@@ -478,6 +478,33 @@ class HistoryData(APIView):
         return Response(data)
 
 
+class Jsontest(APIView):
+    authentication_classes = []
+    permission_classes = []
+
+    def get(self, request, format=None):
+
+        data = [
+            {
+                'name': 'hi',
+                'id': 1,
+                'blah': 'hohoho'
+            },
+            {
+                'name': 'hello',
+                'id': 2,
+                'blah': 'hehehe'
+            },
+            {
+                'name': 'yoohoo',
+                'id': 3,
+                'blah': 'kekeke'
+            },
+        ]
+
+        return Response(data)
+
+
 class KeywordSearchData(APIView):
     authentication_classes = []
     permission_classes = []
