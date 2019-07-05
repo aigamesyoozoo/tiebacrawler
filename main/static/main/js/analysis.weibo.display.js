@@ -8,7 +8,7 @@ var data2 = [];
 
 function getAnalysis(newFolder) {
   folderName = newFolder;
-  var endpoint = "/main/api/history/weibo";
+  var endpoint = "/main/api/table/posts/";
   $.ajax({
     method: "GET",
     url: endpoint,
@@ -41,13 +41,16 @@ function visibility(selected, displayOption) {
 
 function displayPosts(data) {
   let table = document.querySelector("table");
+  // $("#poststable > thead").html("");
+  // $("#poststable > tbody").html("");
   let headers = Object.keys(data2[0]);
   generateTable(table, data2);
-  generateTableHead(table, headers);
+  generateTableHead(table);
   $("#poststable").DataTable();
 }
 
-function generateTableHead(table, data) {
+function generateTableHead(table) {
+  data = ["Post Description", "# Reposts", "# Comments", "# Attitudes"];
   let thead = table.createTHead();
   let row = thead.insertRow();
   for (let key of data) {
@@ -68,8 +71,3 @@ function generateTable(table, data) {
     }
   }
 }
-
-// $(document).ready(function() {
-//   $("#poststable").DataTable();
-//   // $(".dataTables_length").addClass("bs-select");
-// });
