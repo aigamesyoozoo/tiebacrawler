@@ -1,47 +1,82 @@
 {% extends 'main/base.html' %} {% block content %}
 
-<div class="container">
-  <div class="row">
-    <div class="col card border-0 shadow mb-4" style="margin:50px auto;">
-      <div class="card-body">
-        <h3>Search for Tieba</h3>
-        <br />
-        <form action="{% url 'main:home' %}" method="get">
+<!-- {% load static %}-->
+<!-- <link rel="stylesheet" type="text/css" href="{% static 'main/style.css' %}">-->
+
+<div class="query_box">
+<ul class="nav nav-tabs md-tabs nav-justified" id="myTabMD" role="tablist">
+  <li class="nav-item">
+    <a class="nav-link active" id="tieba_search" data-toggle="tab" href="#tieba_searchbox" role="tab"
+      aria-controls="tieba" aria-selected="true">Search for Tieba</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" id="weibo_search" data-toggle="tab" href="#weibo_searchbox" role="tab" 
+    aria-controls="weibo" aria-selected="false">Search for Weibo User</a>
+  </li>
+</ul>
+<div class="tab-content card pt-5 " id="myTabContentMD">
+  <div class="tab-pane active" id="tieba_searchbox" role="tabpanel" aria-labelledby="tieba_search">
+      <form id="tieba_form" name="tieba_form" action="{% url 'main:home' %}" method="get">
           <input
             type="text"
             name="kw"
             placeholder="Enter keywords"
             class="form-control"
-          /><br />
-
+          /><br>
+          
           <input
             type="submit"
-            value="Search for relevant Tieba"
+            value="Search for available forums/Tieba"
             class="btn btn-success"
-          /><br /><br />
+          /><br><br>
         </form>
-
-        {% if history_tieba %}
-        <form action="{% url 'main:home'%}" method="get">
-          <p>
-            <i>Or search by previous tieba crawled instead:</i>
-            <select
-              name="tieba"
-              class="form-control"
-              style="display:inline-block;"
-              onchange="this.form.submit()"
-            >
-              <option disabled selected value> -- select an option -- </option>
-              {% for tieba in history_tieba %}
-              <option value="{{ tieba }}">{{ tieba }}</option>
-              {% endfor %}
-            </select>
-          </p>
-        </form>
-        {% endif %}
-      </div>
-    </div>
+      
+          {% if history_tieba %}
+          <form action="{% url 'main:home'%}" method="get">
+            <p><i>Or search by previous tieba crawled instead:</i>
+              <select name="tieba" style="display:inline-block;" onchange="this.form.submit()">
+                <option disabled selected value> -- select an option -- </option>
+                {% for tieba in history_tieba %}
+                <option value="{{ tieba }}">{{ tieba }}</option>
+                {% endfor %}
+              </select>
+            </p>
+          </form>
+          {% endif %}
   </div>
+  <div class="tab-pane" id="weibo_searchbox" role="tabpanel" aria-labelledby="weibo_search">
+      <form id="weibo_form" name="weibo_form" action="{% url 'main:weibo' %}" method="get">
+          <input
+            type="text"
+            name="kw"
+            placeholder="Enter keywords"
+            class="form-control"
+          /><br>
+          
+          <input
+            type="submit"
+            value="Search for available Weibo User"
+            class="btn btn-success"
+          /><br><br>
+        </form>
+  </div>
+
 </div>
+</div>
+
+<script>
+    $(function(){
+      $(".nav-tabs a").click(function(e){
+      e.preventDefault();
+      //var contents = $(".myTabContentMD").children.removeClass("active");
+      $(".tab-pane").removeClass("active");
+      var pane_id = $(this).attr("href");
+      $(pane_id).addClass("active");
+      });
+    }); 
+</script>
+
+
+
 
 {% endblock %}
