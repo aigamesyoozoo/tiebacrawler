@@ -19,5 +19,6 @@ urlpatterns = [
     path('api/chart/analysis/', views.ChartData.as_view()),
     path('api/chart/keywordsearch/', views.KeywordSearchData.as_view()),
     path('api/history/tieba/', views.HistoryData.as_view()),
+    path('api/history/weibo/', views.Jsontest.as_view()),
     # path('weibo/', views.weibo, name='weibo')
 ]
