@@ -1,7 +1,14 @@
+/*Db.*
+webcrawler/dbs/*
 results/
 weibo_data/
-.idea/
-webcrawler/dbs/default.db
+weiboresults/
+GTDjango/settings.py
+venv/
+
+
+# VS Code
+.vscode/
 
 
 # Created by https://www.gitignore.io/api/django,pycharm
@@ -145,6 +152,7 @@ dmypy.json
 # Reference: https://intellij-support.jetbrains.com/hc/en-us/articles/206544839
 
 # User-specific stuff
+.idea/
 .idea/**/workspace.xml
 .idea/**/tasks.xml
 .idea/**/usage.statistics.xml
