@@ -1,0 +1,31 @@
+{% extends 'main/base.html' %} {% block content %}
+{% if folder %}
+  <div class="alert alert-success crawl_message" role="alert">
+      <h4 class="alert-heading">Crawling Complete!</h4>
+      <br />
+      <p>
+        We have crawled for you the posts, comments, replies and list of tiebas among
+        users who had posted in <b>{{ keyword }}</b>.
+      </p>
+      <p>Download the data: <a href="/downloads/{{folder}}/{{folder}}.zip">{{ folder }}.zip</a>
+      </p>
+  </div>
+  <!--Table-->
+  {% include 'main/components_weibo.html' %} {% load staticfiles %}
+
+{% else %}
+  <div class="alert alert-warning crawl_message" role="alert">
+    <h4 class="alert-heading">Crawling Complete...</h4>
+    <br />
+    <!-- <p><b>No posts, comments, replies and other tiebas were found in {{ keyword }}吧 from 
+      {{ start_date }} to {{ end_date }}.</p> -->
+  </div>
+{% endif %}
+
+<script src="{% static "main/js/analysis.weibo.display.js" %}"></script>
+<script>
+  getAnalysis("{{ folder }}");
+</script>
+
+
+{% endblock %}
