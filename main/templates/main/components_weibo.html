@@ -22,9 +22,10 @@
 <style>
   .datatable td {
     max-width: 250px;
-    overflow: hidden !important; /* this is what fixes the expansion */
-    text-overflow: ellipsis !important; /* not supported in all browsers, but I accepted the tradeoff */
-    white-space: nowrap !important;
+    max-height: 100px;
+    overflow: auto !important; /* this is what fixes the expansion */
+    /*text-overflow: ellipsis !important; /* not supported in all browsers, but I accepted the tradeoff */
+    /* white-space: nowrap !important; */
   }
 </style>
 

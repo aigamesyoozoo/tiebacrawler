@@ -71,3 +71,7 @@ function generateTable(table, data) {
     }
   }
 }
+
+function processPost(post){
+  
+}
