@@ -4,18 +4,21 @@ var history_dict = {};
 var filter1 = "media";
 var filter2 = "dates";
 
-$.ajax({
-  method: "GET",
-  url: endpoint,
-  success: function(data) {
-    history_dict = data;
-    initializePage();
-  },
-  error: function(err) {
-    console.log("error");
-    console.log(err);
-  }
-});
+function setQuerybar(url){
+  endpoint = url;
+  $.ajax({
+    method: "GET",
+    url: url,
+    success: function(data) {
+      history_dict = data;
+      initializePage();
+    },
+    error: function(err) {
+      console.log("error");
+      console.log(err);
+    }
+  });
+}
 
 function getFolder() {
   newFolder =

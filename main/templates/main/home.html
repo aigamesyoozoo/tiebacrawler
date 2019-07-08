@@ -1,158 +1,4 @@
 {% extends 'main/base.html' %} {% block content %} {% load static %}
-<link rel="stylesheet" type="text/css" href="{% static 'main/style.css' %}" />
-
-<script>
-  function submit_task(keyword,start_date_year,start_date_month,end_date_year,end_date_month) {
-    $.ajax({
-      type: 'POST',
-      async: false,
-      url: '/main/crawl/',
-      data: {
-        'keyword' : keyword,
-        'start_date_year' : start_date_year,
-        'start_date_month' : start_date_month,
-        'end_date_year' : end_date_year,
-        'end_date_month' : end_date_month
-      },
-      dataType: 'json',
-      success: function(data){
-        // if(data.Is_submitted){
-        //   print('Is_submitted')
-                 
-        // }
-        // else{
-        //   print('Not_submitted')
-        // }
-      }
-    })         
-  }
-
-  function validate() {
-    var start_date_year = document.forms["query_form"]["start_date_year"].value;
-    var start_date_month = document.forms["query_form"]["start_date_month"].value;
-    var end_date_year = document.forms["query_form"]["end_date_year"].value;
-    var end_date_month = document.forms["query_form"]["end_date_month"].value;
-    var start_date = new Date (start_date_year, start_date_month);
-    var end_date = new Date (end_date_year, end_date_month);
-    var keyword = document.forms["query_form"]["keyword"].value;
-    var Is_overrided;
-
-    if (start_date > end_date) {
-      alert("Start date should be same or earlier than end date.");
-      return false;
-    }
-    else{
-      Is_overrided = true;
-    }  
-    
-    $.ajax({
-      type: 'POST',
-      async: false,
-      url: '/main/validate/',
-      data: {
-        'keyword' : keyword,
-        'start_date_year' : start_date_year,
-        'start_date_month' : start_date_month,
-        'end_date_year' : end_date_year,
-        'end_date_month' : end_date_month
-      },
-      dataType: 'json',
-      success: function(data){
-        if (data.Is_existed){          
-          if(!confirm("The selected tieba with this date range has been already crawled before, would you want to continue and override the previous data?")) {
-            Is_overrided = false;
-          } 
-          else{
-            Is_overrided = true;
-          }
-        }
-        else{
-          Is_overrided = true;
-        }
-      }
-    })
-
-    if(Is_overrided){     
-      submit_task(keyword,start_date_year,start_date_month,end_date_year,end_date_month);
-      downloadView();
-    }
-    else{
-      return false;
-    }
-    
-    // $.ajax({
-    //         type: 'POST',
-    //         async: false,
-    //         url: '/main/downloaded/',
-    //         susccess: function(){
-              
-    //         }
-    //       })
-    
-    // var start_data_string = document.forms["query_form"]["start_date_year"].value + "-" +document.forms["query_form"]["start_date_month"].value;
-    // var end_date_string = document.forms["query_form"]["end_date_year"].value + "-" +document.forms["query_form"]["end_date_month"].value;
-    // var folder_name = keyword + "_" + start_data_string + "_" + end_date_string;
-    // full_url = "/main/validate/"+folder_name;
-    // alert(full_url);
-    // $.ajax({
-    //   url: full_url,
-    //   //data: {
-    //     //'folder_name':folder_name
-    //     // 'keyword' : keyword,
-    //     // 'start_date' : start_data_string,
-    //     // 'end_date' : end_date_string
-    //   //},
-    //   dataType: 'json',
-    //   success: function(data){
-    //     alert(data.Is_existed)
-    //     if (data.Is_existed){
-          
-    //       var retVal = confirm("The selected tieba with this date range has been already crawled before, would you want to continue and override the previous data?");
-    //           if( retVal == true ) {
-    //             // document.write ("User wants to continue!");
-    //             //alert()
-    //             return true;
-    //           } else {
-    //             // document.write ("User does not want to continue!");
-    //             return false;
-    //           }
-    //     }
-    //   }
-    // })
-    
-  }
-
-  function downloadView() {
-    // Values
-    document.getElementById("keyword").textContent = document.forms["query_form"]["keyword"].value;
-    document.getElementById("start_date").textContent = document.forms["query_form"]["start_date_year"].value + "-" +document.forms["query_form"]["start_date_month"].value;
-    document.getElementById("end_date").textContent = document.forms["query_form"]["end_date_year"].value + "-" +document.forms["query_form"]["end_date_month"].value;
-    
-    // Visibility
-    var download_segment = document.getElementById("download_segment");
-    var query_segment = document.getElementById("query_segment");
-    download_segment.style.display = "block";
-    query_segment.style.display = "none";
-  }
-
-
-// $(window).on('beforeunload', function(){
-      //   alert('Are you sure you want to leave?');
-      // });
-
-      // Following operations will STOP current scrapy task: 
-      //     closing tab, refresh page, going to another url
-  
-  
-
-  $(window).on('unload', function(){
-    $.ajax({
-    type: 'GET',
-    url: '/main/cancel/',
-    })
-  });
-
-</script>
 
 <div class="container">
 
@@ -162,12 +8,7 @@
       <div class="card-body">
       <h3>Tieba and Date selection</h3>
       <br />
-      <!-- <form
-        name="query_form"
-        action="{% url 'main:crawl' %}"
-        onsubmit="return validateDates()"
-        method="post"
-      > -->
+
       <form
         name="query_form"
         action="{% url 'main:downloaded' %}"
@@ -185,8 +26,6 @@
         <br />
 
         <p>Start Month</p>
-        <!-- <input type="month" name="start_date" class="form-control" /> -->
-        
         <div class="form-inline">
           <select id="start_date_year" name="start_date_year" class="form-control" style="margin-right:10px;">
           </select>
@@ -196,8 +35,6 @@
         <br />
 
         <p>End Month <i>(inclusive of selected month)</i></p>
-        <!-- <input type="month" name="end_date" class="form-control" /> -->
-
         <div class="form-inline">
           <select id="end_date_year" name="end_date_year" class="form-control" style="margin-right:10px;">
           </select>
@@ -227,77 +64,12 @@
   </div>
 
   <!-- DOWNLOADING -->
-  <div class="row">
-    <div id="download_segment" style="display:none;">
-      <div class="alert alert-warning crawl_message" role="alert">
-        <h2 class="alert-heading">Downloading in progress...</h2>
-        <br />
-        <p>
-          Downloading comments, replies, and popular forums/tieba among users who had
-          posted
-          <ul>
-            <li>in <b><span id="keyword"></span></b></li>
-            <li>from <b><span id="start_date"></span></b></li>
-            <li>to <b><span id="end_date"></span></b></li>
-          </ul>
-        </p>
-        <hr />
-        <p class="mb-0">
-          Kindly give us a moment while we complete your downloading. The more the
-          available data, the longer the downloading period.
-        </p>
-        <br>
-        
-        <form action="{% url 'main:cancel' %}" method="get">
-            <input type="submit" value="Cancel this task" class="btn btn-success">
-        </form>
-      </div>
-
-      <img
-        id="progress_gif"
-        src="/static/main/images/rotator2.gif"
-        alt="downloading in progress"
-      />
-      <p style="text-align:center;"><b>Downloading...</b></p>
-    </div>
-  </div>
+  {% include 'main/downloading_message.html' %}
 </div>
 
-<script>
-    var now = new Date();
-    var year_select = ['start_date_year', 'end_date_year'];
-    var month_select = ['start_date_month', 'end_date_month'];
-    year_select.forEach(createYearsOptions);
-    month_select.forEach(createMonthsOptions);
-
-    function createYearsOptions(item, index) {
-      var max = now.getFullYear();
-      var min = max-7;
-      select = document.getElementById(item);
-    
-      for (var i = max; i>=min; i--){
-        var opt = document.createElement('option');
-        opt.value = i;
-        opt.innerHTML = i;
-        select.appendChild(opt);
-      }
-    }
-
-    function createMonthsOptions(item, index) {
-      curr_month = now.getMonth()+1;
-      select = document.getElementById(item);
-    
-      for (var i = 1; i<=12; i++){
-        var opt = document.createElement('option');
-        opt.value = i.toString();
-        opt.innerHTML = i;
-        if (i == curr_month) {
-          opt.setAttribute("selected","selected");
-        }
-        select.appendChild(opt);
-      }
-    }
-
-  </script>
+<!--CSS & JS-->
+<link rel="stylesheet" type="text/css" href="{% static 'main/style.css' %}" />
+<script src="{% static "main/js/date.create.dropdown.js" %}"></script>
+<script src="{% static "main/js/search.tieba.js" %}"></script>
 
 {% endblock %}

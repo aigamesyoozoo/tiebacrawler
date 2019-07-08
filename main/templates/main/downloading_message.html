@@ -1,0 +1,34 @@
+  <div class="row">
+    <div id="download_segment" style="display:none;">
+      <div class="alert alert-warning crawl_message" role="alert">
+        <h2 class="alert-heading">Downloading in progress...</h2>
+        <br />
+        <p>
+          Downloading comments, replies, and popular forums/tieba among users who had
+          posted
+          <ul>
+            <li>in <b><span id="keyword"></span></b></li>
+            <li>from <b><span id="start_date"></span></b></li>
+            <li>to <b><span id="end_date"></span></b></li>
+          </ul>
+        </p>
+        <hr />
+        <p class="mb-0">
+          Kindly give us a moment while we complete your downloading. The more the
+          available data, the longer the downloading period.
+        </p>
+        <br>
+        
+        <form action="{% url 'main:cancel' %}" method="get">
+            <input type="submit" value="Cancel this task" class="btn btn-success">
+        </form>
+      </div>
+
+      <img
+        id="progress_gif"
+        src="/static/main/images/rotator2.gif"
+        alt="downloading in progress"
+      />
+      <p style="text-align:center;"><b>Downloading...</b></p>
+    </div>
+  </div>
