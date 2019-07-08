@@ -4,12 +4,12 @@
 {% include 'main/querybar_history.html' with title="Select Weibo and Date Range"%}
 
 <!--Table-->
-{% include 'main/components_weibo.html' %} {% load staticfiles %}
+{% include 'main/components_weibo.html' %} 
 
+{% load staticfiles %}
 <script src="{% static "main/js/analysis.query.js" %}"></script>
 <script src="{% static "main/js/analysis.weibo.display.js" %}"></script>
 <script>
     setQuerybar("/main/api/history/weibo/");
-    // setEndpoint("/main/api/history/weibo/");
 </script>
 {% endblock %}

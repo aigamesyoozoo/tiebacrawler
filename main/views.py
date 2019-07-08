@@ -368,11 +368,12 @@ def process_scraped_content(folder_name):
         RESULTS_PATH / folder_name / file_to_process).resolve()
 
     analysis = get_keyword_summary(file_to_process_full_path)
-    summary, keywords, sentiments = format_analysis_for_csv(analysis)
+    summary, keywords, sentiments, stats = format_analysis_for_csv(analysis)
 
     write_to_csv(folder_full_path, 'summary.csv', summary)
     write_to_csv(folder_full_path, 'keywords.csv', keywords)
     write_to_csv(folder_full_path, 'sentiments.csv', sentiments)
+    write_to_csv(folder_full_path, 'stats.csv', stats)
 
 
 def process_download_folder(folder_name):
@@ -471,83 +472,157 @@ def cancel(request):
     return render(request, 'main/cancel.html')
 
 
+# def get_keyword_summary(file_path):
+#        # variables for sentiment analysis
+#     positive = 0
+#     negative = 0
+#     neutral = 0
+
+#     # read content
+#     # df = pd.read_csv(file_path, encoding='utf-8', header=None) #issue with unicode character in filepath
+#     with open(file_path, 'r', encoding='utf-8') as f:
+#         df = pd.read_csv(f, encoding='utf-8', header=None)
+
+#     # remove replies with null value
+#     df_nonull = df[pd.notnull(df[2])]
+
+#     keywords = []
+#     big_text = ""
+
+#     # loop through each row for keyword processing for single reply
+#     for text in df_nonull[2]:
+#         big_text += text + "。"  # append text for summary processing later on
+#         s = SnowNLP(text)  # initialize text as SnowNLP object
+
+#         # sentiment analysis
+#         sentiment = s.sentiments  # value for sentiments, range from 0 to 1
+#         if sentiment > 0.7:
+#             positive += 1
+#         elif sentiment < 0.3:
+#             negative += 1
+#         else:
+#             neutral += 1
+
+#         # keyword extraction
+#         key = s.keywords(5)  # get top 5 keywords of each reply
+#         # loop through each keyword
+#         for x in key:
+#             if len(x) > 1:  # make sure keyword length is more than one, to prevent meaningless keyword
+#                 keywords.append(x)  # append to list
+
+#     # keyword processing for whole tieba
+#     # convert to dictionary for creating dataframe
+#     dictionary = {'keyword': keywords}
+#     keyword_df = pd.DataFrame(dictionary)  # create dataframe
+#     # get the top 10 keywords of the whole tieba based on count
+#     result = keyword_df.keyword.value_counts().nlargest(10, keep='first')
+
+#     # variables for summary processing
+#     finalized_summary = []
+#     replies_id = []
+#     post_id = []
+
+#     # summary processing for whole tieba
+#     s = SnowNLP(big_text)
+#     # get top 5 summary (reply), truncation might happen in the summary
+#     summary = s.summary(5)
+
+#     # locating post and replies id
+#     # remove duplicates from summary (happens on certain dataset)
+#     no_dup_summary = list(set(summary))
+#     for summ in no_dup_summary:
+#         # search dataframe for data containing the summary, substring of the actual list
+#         sum_df = df_nonull[df_nonull[2].str.contains(summ, na=False)]
+
+#         # loop through each of the dataframe, if the substring is short, might increase the number of summary found by a lot
+#         for i in range(sum_df.shape[0]):
+#             post_id.append(sum_df.iloc[i][0])  # post id
+#             replies_id.append(sum_df.iloc[i][1])  # replies id
+#             # summary, obtain it again since we have removed duplicates
+#             finalized_summary.append(sum_df.iloc[i][2])
+
+#     print('FINALIZED SUMMARY >>>>>>')
+#     for a in finalized_summary:
+#         print(a)
+#     for a in replies_id:
+#         print(a)
+#     # return a dictionary, json.dumps if needed
+#     return {'post_id': post_id, 'replies_id': replies_id, 'summary': finalized_summary, 'keyword': dict(result), 'positive': positive, 'negative': negative, 'neutral': neutral}
+
+
 def get_keyword_summary(file_path):
-       # variables for sentiment analysis
+
+    #variables for sentiment analysis
     positive = 0
     negative = 0
     neutral = 0
-
-    # read content
-    # df = pd.read_csv(file_path, encoding='utf-8', header=None) #issue with unicode character in filepath
+	
+    #read content
+    #df = pd.read_csv(file_path, encoding='utf-8', header=None) #issue with unicode character in filepath
     with open(file_path, 'r', encoding='utf-8') as f:
         df = pd.read_csv(f, encoding='utf-8', header=None)
-
-    # remove replies with null value
+	
+    #remove replies with null value
     df_nonull = df[pd.notnull(df[2])]
-
+	
     keywords = []
     big_text = ""
-
-    # loop through each row for keyword processing for single reply
+	
+    #loop through each row for keyword processing for single reply
     for text in df_nonull[2]:
-        big_text += text + "。"  # append text for summary processing later on
-        s = SnowNLP(text)  # initialize text as SnowNLP object
-
-        # sentiment analysis
-        sentiment = s.sentiments  # value for sentiments, range from 0 to 1
+        big_text += text + "。" #append text for summary processing later on
+        s = SnowNLP(text) #initialize text as SnowNLP object
+		
+        #sentiment analysis
+        sentiment = s.sentiments #value for sentiments, range from 0 to 1
         if sentiment > 0.7:
             positive += 1
         elif sentiment < 0.3:
             negative += 1
         else:
             neutral += 1
-
-        # keyword extraction
-        key = s.keywords(5)  # get top 5 keywords of each reply
-        # loop through each keyword
+		
+        #keyword extraction
+        key = s.keywords(5) #get top 5 keywords of each reply
+        #loop through each keyword
         for x in key:
-            if len(x) > 1:  # make sure keyword length is more than one, to prevent meaningless keyword
-                keywords.append(x)  # append to list
+            if len(x) > 1: #make sure keyword length is more than one, to prevent meaningless keyword
+                keywords.append(x) #append to list
 
-    # keyword processing for whole tieba
-    # convert to dictionary for creating dataframe
-    dictionary = {'keyword': keywords}
-    keyword_df = pd.DataFrame(dictionary)  # create dataframe
-    # get the top 10 keywords of the whole tieba based on count
-    result = keyword_df.keyword.value_counts().nlargest(10, keep='first')
-
-    # variables for summary processing
+    #keyword processing for whole tieba
+    dictionary = {'keyword': keywords} #convert to dictionary for creating dataframe
+    keyword_df = pd.DataFrame(dictionary) #create dataframe
+    result = keyword_df.keyword.value_counts().nlargest(10, keep='first') #get the top 10 keywords of the whole tieba based on count
+	
+    #variables for summary processing
     finalized_summary = []
     replies_id = []
     post_id = []
-
-    # summary processing for whole tieba
+	
+    #summary processing for whole tieba
     s = SnowNLP(big_text)
-    # get top 5 summary (reply), truncation might happen in the summary
-    summary = s.summary(5)
-
-    # locating post and replies id
-    # remove duplicates from summary (happens on certain dataset)
-    no_dup_summary = list(set(summary))
+    
+    #limit the number of summary based on replies count (1 summary every 5 replies up to a maximum of 5 summaries)
+    calc_total_summary = int(df_nonull.shape[0] / 5) + 1 #add 1 to compensate for rounding down
+    if(calc_total_summary < 5):
+        summary = s.summary(calc_total_summary)
+    else:
+        summary = s.summary(5) #get top 5 summary (reply), truncation might happen in the summary
+		
+    #locating post and replies id
+    no_dup_summary = list(set(summary)) #remove duplicates from summary (happens on certain dataset)
     for summ in no_dup_summary:
-        # search dataframe for data containing the summary, substring of the actual list
-        sum_df = df_nonull[df_nonull[2].str.contains(summ, na=False)]
 
-        # loop through each of the dataframe, if the substring is short, might increase the number of summary found by a lot
+        sum_df = df_nonull[df_nonull[2].str.contains(summ, na=False)] #search dataframe for data containing the summary, substring of the actual list
+        
+        #loop through each of the dataframe, if the substring is short, might increase the number of summary found by a lot
         for i in range(sum_df.shape[0]):
-            post_id.append(sum_df.iloc[i][0])  # post id
-            replies_id.append(sum_df.iloc[i][1])  # replies id
-            # summary, obtain it again since we have removed duplicates
-            finalized_summary.append(sum_df.iloc[i][2])
+            post_id.append(sum_df.iloc[i][0])            #post id
+            replies_id.append(sum_df.iloc[i][1])         #replies id
+            finalized_summary.append(sum_df.iloc[i][2])  #summary, obtain it again since we have removed duplicates
 
-    print('FINALIZED SUMMARY >>>>>>')
-    for a in finalized_summary:
-        print(a)
-    for a in replies_id:
-        print(a)
-    # return a dictionary, json.dumps if needed
-    return {'post_id': post_id, 'replies_id': replies_id, 'summary': finalized_summary, 'keyword': dict(result), 'positive': positive, 'negative': negative, 'neutral': neutral}
-
+    return {'post_id': post_id, 'replies_id': replies_id, 'replies_count': df_nonull.shape[0], 'summary': finalized_summary, 'keyword': dict(result), 'positive': positive, 'negative': negative, 'neutral': neutral} #return a dictionary, json.dumps if needed
+	
 
 def format_analysis_for_csv(analysis):
     summary = [(item, analysis['post_id'][index], analysis['replies_id'][index])
@@ -559,7 +634,9 @@ def format_analysis_for_csv(analysis):
         ('negative', analysis['negative']),
         ('neutral', analysis['neutral'])
     ]
-    return summary, keywords, sentiments
+    stats = [('replies_count', analysis['replies_count'])]
+
+    return summary, keywords, sentiments, stats
 
 
 def write_to_csv(folder_full_path, filename, data):
@@ -575,13 +652,14 @@ class ChartData(APIView):
     def get(self, request, format=None):
         folder = request.GET.get('folder', None)
 
-        summary, keywords, sentiments, forums = read_analysis_from_csv(
+        summary, keywords, sentiments, stats, forums = read_analysis_from_csv(
             folder)
 
         data = {
             'summary': summary,
             'keywords': keywords,
             'sentiments': sentiments,
+            'stats': stats,
             'forums': forums,
         }
         return Response(data)
@@ -657,7 +735,7 @@ def read_analysis_from_csv(folder):
     download_path_obj = (RESULTS_PATH / folder)
     os.chdir(download_path_obj.resolve())
     files = os.listdir(download_path_obj)
-    summary = sentiments = keywords = forums = None
+    summary = sentiments = keywords = top_forums = stats = None
     url_template = 'https://tieba.baidu.com/p/%s#post_content_%s'
 
     if 'summary.csv' in files:
@@ -665,6 +743,10 @@ def read_analysis_from_csv(folder):
             summary = list(csv.reader(f, delimiter=',',
                                       quotechar='|', dialect="excel"))
             summary = [(s[0], url_template % (s[1], s[2])) for s in summary]
+
+        with open('stats.csv', 'r', encoding='utf-8') as f:
+            reader = csv.reader(f)
+            stats = {rows[0]: rows[1] for rows in reader}
 
         with open('sentiments.csv', 'r', encoding='utf-8') as f:
             reader = csv.reader(f)
@@ -690,7 +772,7 @@ def read_analysis_from_csv(folder):
         # convert to simple dict for easy ref by front-end
         top_forums = {pair['tieba']: pair['count'] for pair in forums}
 
-    return summary, keywords, sentiments, top_forums
+    return summary, keywords, sentiments, stats, top_forums
 
 
 def csvdownload(request):

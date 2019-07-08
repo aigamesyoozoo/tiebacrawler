@@ -46,7 +46,9 @@ function displayPosts(data) {
   let headers = Object.keys(data2[0]);
   generateTable(table, data2);
   generateTableHead(table);
-  $("#poststable").DataTable();
+  $("#poststable").DataTable({
+    columnDefs: [{ width: "200px", targets: 0 }]
+  });
 }
 
 function generateTableHead(table) {
@@ -70,8 +72,4 @@ function generateTable(table, data) {
       cell.appendChild(text);
     }
   }
-}
-
-function processPost(post){
-  
 }
