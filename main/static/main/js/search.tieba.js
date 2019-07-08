@@ -85,14 +85,6 @@ function downloadView() {
   // Values
   document.getElementById("keyword").textContent =
     document.forms["query_form"]["keyword"].value;
-  document.getElementById("start_date").textContent =
-    document.forms["query_form"]["start_date_year"].value +
-    "-" +
-    document.forms["query_form"]["start_date_month"].value;
-  document.getElementById("end_date").textContent =
-    document.forms["query_form"]["end_date_year"].value +
-    "-" +
-    document.forms["query_form"]["end_date_month"].value;
 
   // Visibility
   var download_segment = document.getElementById("download_segment");
