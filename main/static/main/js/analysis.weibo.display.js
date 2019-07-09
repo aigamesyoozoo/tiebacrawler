@@ -31,20 +31,19 @@ function visibility(selected, displayOption) {
 }
 
 function displayPosts(data) {
+  let postsContainer = document.getElementById("postsContainer");
+  postsContainer.innerHTML =
+    '<table id="poststable" class="table table-striped" style="max-width: 100%;"></table>';
+
   let table = document.querySelector("table");
-  $("#poststable > thead").html("");
-  $("#poststable > tbody").html("");
-  console.log(data);
   generateTable(table, data); // Need to generate data before head, else data will be populated in thead instead of tbody
   generateTableHead(table);
-  if (!$.fn.dataTable.isDataTable("#poststable")) {
-    $("#poststable").DataTable({
-      columnDefs: [{ width: 400, targets: 0 }]
-    });
-  }
-  let postsContainer = document.getElementById("postsContainer");
+  // if (!$.fn.dataTable.isDataTable("#poststable")) {
+  $("#poststable").DataTable({
+    columnDefs: [{ width: 400, targets: 0 }]
+  });
+  // }
   postsContainer.style.display = "block";
-  console.log(postsContainer.style.display);
 }
 
 function generateTableHead(table) {
