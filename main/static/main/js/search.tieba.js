@@ -47,7 +47,8 @@ function validate() {
       start_date_year: start_date_year,
       start_date_month: start_date_month,
       end_date_year: end_date_year,
-      end_date_month: end_date_month
+      end_date_month: end_date_month,
+      task_type: "tieba"
     },
     dataType: "json",
     success: function(data) {

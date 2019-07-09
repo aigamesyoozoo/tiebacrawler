@@ -151,21 +151,22 @@ def get_weibo(id, proxy_pool, folder_name, page=1, range=-1):
 	while True:
 		proxy_addr = next(proxy_pool)
 		weibo_url = f"{url}&containerid={get_containerid(url, proxy_addr)}&page={page}"
-		print(f"accessing {weibo_url}")
+		# print(f"accessing {weibo_url}")
 		# construct urls
 		try:
 			data = use_proxy(weibo_url, proxy_addr)
 			content = json.loads(data).get('data')
-			raw_file = str(id)+'_page_'+str(page)+'.json'
-			curr_path = (WEIBO_RESULTS_PATH / folder_name).resolve() 
-			os.chdir(curr_path)
-			print(curr_path)
-			with open(raw_file, 'w') as f:
-				json.dump(content, f)
+			# raw_file = str(id)+'_page_'+str(page)+'.json'
+			# curr_path = (WEIBO_RESULTS_PATH / folder_name).resolve() 
+			# os.chdir(curr_path)
+			# print(curr_path)
+			# with open(raw_file, 'w') as f:
+			# 	json.dump(content, f)
 			# get weibo content card
 			cards = content.get('cards')
 			# if this page contains content
-			if(len(cards)>0):
+			global status
+			if(len(cards)>0 and status != 'cancel'):
 				for i, card in enumerate(cards):
 					# print("第"+str(page)+"页，第"+str(i+1)+"条微博")
 					card_type = card.get('card_type')
@@ -218,7 +219,7 @@ def get_weibo(id, proxy_pool, folder_name, page=1, range=-1):
 							"转发数":str(reposts_count)
 						}
 						file = str(id)+'-'+str(page)+'-'+str(i)+'.json'
-						curr_path = (WEIBO_RESULTS_PATH / folder_name / 'pages').resolve() 
+						curr_path = (WEIBO_RESULTS_PATH / folder_name).resolve() 
 						os.chdir(curr_path)
 						with open(file, 'w', encoding='utf-8') as f:
 							json.dump(output_dict, f)
@@ -234,7 +235,7 @@ def crawl_weibo(uid,folder_name):
 	status = 'not finished'
 
 	# time.sleep(3) # comment out this if not using jupyter
-	proxies = proxies = ['89.216.48.230:44061','148.77.34.200:54321','183.91.68.148:4145','189.51.101.234:35313','122.129.66.90:8080','162.247.47.3:54321']
+	proxies = proxies = ['148.77.34.200:54321','183.91.68.148:4145','189.51.101.234:35313','122.129.66.90:8080','162.247.47.3:54321']
 	proxy_pool = cycle(proxies)
 
 	# click on date link to get id
@@ -258,6 +259,10 @@ def get_weibo_status():
 	global status
 	return status
 
+def cancel_weibo_crawl():
+	global status
+	status = 'cancel'
+	
 
 
 # # main
