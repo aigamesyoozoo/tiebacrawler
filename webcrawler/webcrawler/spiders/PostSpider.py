@@ -31,10 +31,7 @@ class PostSpider(scrapy.Spider):
             kwargs.get('start_date'), '%Y-%m').date()
         self.end_date = datetime.datetime.strptime(
             kwargs.get('end_date'), '%Y-%m').date()
-
-        ####################need to be pushed###################
         self.folder_name = kwargs.get('folder_name')
-        ####################need to be pushed###################
         
         # self.folder_name = 'xba_2019-02_2019-03'
         print('--------------------------------------------------------------')
