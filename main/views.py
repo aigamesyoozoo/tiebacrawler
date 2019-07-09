@@ -71,19 +71,10 @@ def get_weibouser_and_daterange_from_folder(folder):
 #To be added weibo 2
 def get_weibo_history():
     '''
-    return dict for dropdown
-    key: user ,value:[date1,date2]
+    return list of users based on foldernames in /weiboresults/ folder
     '''
-    dir_list = next(os.walk(WEIBO_RESULTS_PATH))[1]
-    weibo_history_dict = OrderedDict()
-    for folder in dir_list:
-        weibouser, daterange = get_weibouser_and_daterange_from_folder(folder)
-        if weibouser not in weibo_history_dict.keys():
-            weibo_history_dict[weibouser] = [daterange]
-        else:
-            weibo_history_dict[weibouser].append(daterange)
-        
-    return weibo_history_dict
+    dir_list = next(os.walk(WEIBO_RESULTS_PATH))[1]        
+    return list(set(dir_list))
 
 
 #To be added weibo 4
@@ -755,6 +746,7 @@ class TiebaHistoryData(APIView):
 
         return Response(data)
 
+
 # To be added weibo 9
 class WeiboHistoryData(APIView):
     authentication_classes = []
@@ -763,6 +755,7 @@ class WeiboHistoryData(APIView):
     def get(self, request, format=None):
         data = get_weibo_history()
         return Response(data)
+
 
 # To be added weibo 10
 class WeiboTableData(APIView):
@@ -773,6 +766,7 @@ class WeiboTableData(APIView):
         folder_name = request.GET.get('folder', None)
         data = get_weibos_by_user_range(folder_name)
         return Response(data)
+
 
 class KeywordSearchData(APIView):
     authentication_classes = []

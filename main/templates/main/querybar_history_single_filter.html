@@ -1,0 +1,21 @@
+<!--Query-->
+<div class="row">
+  <div class="col card border-0 shadow mb-4">
+    <div class="card-body">
+      <h6>{{ title }}</h6>
+      <hr />
+
+      <div class="row">
+        <div class="col-4">
+          <select
+            id="media"
+            class="form-control"
+            onchange="getAnalysis(this.value);"
+          >
+            <option disabled selected value> -- select an option -- </option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
