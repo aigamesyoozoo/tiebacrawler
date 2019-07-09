@@ -1,13 +1,9 @@
-// to update
-// data.x
-// endpoint
-
-var folderName = "i am the GLOBAL folderName for weibo!";
+// var folderName = "i am the GLOBAL folderName for weibo!";
 var components = ["postsContainer"];
 var data2 = [];
 
-function getAnalysis(newFolder) {
-  folderName = newFolder;
+function getAnalysis(folderName) {
+  // folderName = newFolder;
   var endpoint = "/main/api/table/posts/";
   $.ajax({
     method: "GET",
@@ -32,7 +28,6 @@ function getAnalysis(newFolder) {
   });
 }
 
-// repeated
 function visibility(selected, displayOption) {
   selected.forEach(function(item) {
     document.getElementById(item).style.display = displayOption;
@@ -41,18 +36,26 @@ function visibility(selected, displayOption) {
 
 function displayPosts(data) {
   let table = document.querySelector("table");
-  // $("#poststable > thead").html("");
-  // $("#poststable > tbody").html("");
+  $("#poststable > thead").html("");
+  $("#poststable > tbody").html("");
   let headers = Object.keys(data2[0]);
   generateTable(table, data2);
   generateTableHead(table);
-  $("#poststable").DataTable({
-    columnDefs: [{ width: "200px", targets: 0 }]
-  });
+  $("#poststable").DataTable({ columnDefs: [{ width: "400px", targets: 0 }] });
+  let postsContainer = document.getElementById("postsContainer");
+  postsContainer.style.display = "block";
+  console.log(postsContainer.style.display);
 }
 
 function generateTableHead(table) {
-  data = ["Post Description", "# Reposts", "# Comments", "# Attitudes"];
+  data = [
+    "Post Description",
+    "Date Created",
+    "Link",
+    "# Reposts",
+    "# Comments",
+    "# Attitudes"
+  ];
   let thead = table.createTHead();
   let row = thead.insertRow();
   for (let key of data) {
