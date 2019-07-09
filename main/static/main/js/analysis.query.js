@@ -4,6 +4,7 @@ var history_dict = {};
 var filter1 = "media";
 var filter2 = "dates";
 
+
 function setQuerybar(url){
   endpoint = url;
   $.ajax({
@@ -20,13 +21,6 @@ function setQuerybar(url){
   });
 }
 
-function getFolder() {
-  newFolder =
-    document.getElementById(filter1).value +
-    "_" +
-    document.getElementById(filter2).value;
-  getAnalysis(newFolder);
-}
 
 function initializePage() {
   var hist = Object.keys(history_dict);
@@ -34,10 +28,6 @@ function initializePage() {
   display_past_crawls(hist[0]);
 }
 
-function display_past_crawls(tieba) {
-  create_options("dates", history_dict[tieba]);
-  getFolder();
-}
 
 function create_options(id, arr) {
   select = document.getElementById(id);
@@ -49,4 +39,19 @@ function create_options(id, arr) {
     opt.innerHTML = element;
     select.appendChild(opt);
   });
+}
+
+
+function display_past_crawls(tieba) {
+  create_options("dates", history_dict[tieba]);
+  getFolder();
+}
+
+
+function getFolder() {
+  newFolder =
+    document.getElementById(filter1).value +
+    "_" +
+    document.getElementById(filter2).value;
+  getAnalysis(newFolder);
 }

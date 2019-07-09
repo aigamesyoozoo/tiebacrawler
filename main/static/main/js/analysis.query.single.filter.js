@@ -9,18 +9,13 @@ function setQuerybar(url) {
     method: "GET",
     url: url,
     success: function(data) {
-      initializePage(data);
+      if (data.users) create_options(filter1, data.users);
     },
     error: function(err) {
       console.log("error");
       console.log(err);
     }
   });
-}
-
-function initializePage(data) {
-  var hist = data; //array
-  create_options(filter1, hist);
 }
 
 function create_options(id, arr) {
@@ -33,4 +28,6 @@ function create_options(id, arr) {
     opt.innerHTML = element;
     select.appendChild(opt);
   });
+
+  getAnalysis(document.getElementById(filter1).value);
 }
