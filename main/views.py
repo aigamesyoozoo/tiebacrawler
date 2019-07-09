@@ -109,11 +109,11 @@ def weibo_history(request):
     return render(request,'main/weibohistory.html',context)
 
 #To be added weibo 6
-def get_weibos_by_user(folder_name = ''):
+def get_weibos_by_user(folder_name):
     all_weibos = []
     # all_cards = []
     # dir_list = next(os.walk(WEIBO_RESULTS_PATH))[1]
-    if folder_name != '':
+    if folder_name:
         # folder_name = folder_name + '/pages/'
         curr_path = (WEIBO_RESULTS_PATH / folder_name).resolve() 
         files = os.listdir(curr_path)
@@ -774,7 +774,7 @@ class WeiboHistoryData(APIView):
     permission_classes = []
 
     def get(self, request, format=None):
-        data = get_weibo_history()
+        data = { 'users' : get_weibo_history() }
         return Response(data)
 
 # To be added weibo 10

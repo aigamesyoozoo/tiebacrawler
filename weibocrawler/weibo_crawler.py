@@ -24,7 +24,11 @@ def use_proxy(url, proxy_addr):
 	proxy = urllib.request.ProxyHandler({'http': proxy_addr})
 	opener = urllib.request.build_opener(proxy, urllib.request.HTTPHandler)
 	urllib.request.install_opener(opener)
-	data = urllib.request.urlopen(req).read().decode('utf-8', 'ignore')
+	try:
+		data = urllib.request.urlopen(req).read().decode('utf-8', 'ignore')
+	except Exception as e:
+		print(e)
+		data = None
 	return data
 
 # get container id for content crawling
@@ -158,6 +162,9 @@ def get_weibo(id, proxy_pool, folder_name, page=1, range=-1):
 		# construct urls
 		try:
 			data = use_proxy(weibo_url, proxy_addr)
+			if data is None:
+				break
+			
 			content = json.loads(data).get('data')
 			# raw_file = str(id)+'_page_'+str(page)+'.json'
 			# curr_path = (WEIBO_RESULTS_PATH / folder_name).resolve() 
@@ -173,7 +180,7 @@ def get_weibo(id, proxy_pool, folder_name, page=1, range=-1):
 					# print("第"+str(page)+"页，第"+str(i+1)+"条微博")
 					card_type = card.get('card_type')
 					# posted weibo
-					print('weibo_crawler:',status)
+					
 					if(card_type == 9 and status != 'cancel'):
 						mblog = card.get('mblog') # get post attrs
 						id = mblog.get("id")
