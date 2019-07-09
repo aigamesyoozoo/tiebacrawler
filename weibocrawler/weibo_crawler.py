@@ -9,6 +9,7 @@ from GTDjango.settings import WEIBO_RESULTS_PATH
 import os
 
 global status
+status = 'not finished'
 # retrieve proxy
 # async def retrieve(proxies):
 # 	while True:
@@ -142,6 +143,8 @@ def get_weibo(id, proxy_pool, folder_name, page=1, range=-1):
 	date_time_in_range=True
 	now = datetime.datetime.now()
 	year = now.year # int
+	global status
+	status = 'not finished'
 
 	url = f"https://m.weibo.cn/api/container/getIndex?type=uid&value={id}"
 	print(f"profile page: {url}")
@@ -165,13 +168,13 @@ def get_weibo(id, proxy_pool, folder_name, page=1, range=-1):
 			# get weibo content card
 			cards = content.get('cards')
 			# if this page contains content
-			global status
-			if(len(cards)>0 and status != 'cancel'):
+			if(len(cards)>0):
 				for i, card in enumerate(cards):
 					# print("第"+str(page)+"页，第"+str(i+1)+"条微博")
 					card_type = card.get('card_type')
 					# posted weibo
-					if(card_type == 9):
+					print('weibo_crawler:',status)
+					if(card_type == 9 and status != 'cancel'):
 						mblog = card.get('mblog') # get post attrs
 						id = mblog.get("id")
 						created_at = mblog.get('created_at') # creation time
@@ -231,11 +234,10 @@ def get_weibo(id, proxy_pool, folder_name, page=1, range=-1):
 			print(e)
 
 def crawl_weibo(uid,folder_name):
-	global status
-	status = 'not finished'
+	global status	
 
 	# time.sleep(3) # comment out this if not using jupyter
-	proxies = proxies = ['148.77.34.200:54321','183.91.68.148:4145','189.51.101.234:35313','122.129.66.90:8080','162.247.47.3:54321']
+	proxies = ['122.129.66.90:8080','162.247.47.3:54321']
 	proxy_pool = cycle(proxies)
 
 	# click on date link to get id
@@ -253,7 +255,7 @@ def crawl_weibo(uid,folder_name):
 		get_weibo(id, proxy_pool, folder_name)
 
 	status = 'finished'
-	return 'finished'
+	
 
 def get_weibo_status():
 	global status

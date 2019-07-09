@@ -29,6 +29,7 @@ from snownlp import SnowNLP
 import pandas as pd
 
 from weibocrawler.weibo_crawler import *
+import asyncio
 from bs4 import BeautifulSoup
 import urllib.request
 from urllib.parse import quote
@@ -247,7 +248,6 @@ def validate_Isexisted(request):
         print('keyword',request.POST.get('keyword'))
         print('validate',request.POST.get('task_type'))
         if request.POST.get('task_type') == 'tieba':
-            print('validate tieba',request.POST.get('task_type'))
             dir_list = next(os.walk(RESULTS_PATH))[1]
             keyword = request.POST.get('keyword', None)
             start_date = format_date(request.POST.get(
@@ -258,7 +258,7 @@ def validate_Isexisted(request):
             folder_name = '_'.join([keyword, start_date, end_date])
                 
         elif request.POST.get('task_type') == 'weibo':
-            print('validate weibo',request.POST.get('task_type'))
+            request.session['status'] = 'not finished'
             dir_list = next(os.walk(WEIBO_RESULTS_PATH))[1]
             # start_date = '2019-06'
             # end_date = '2019-07'
@@ -319,10 +319,7 @@ def make_tieba_task(request):
 #To be added weibo  3
 @csrf_exempt
 def make_weibo_task(request):
-    data = {
-                    "Is_submitted": False,
-                }
-    
+   
     if request.method == "POST":
         print('welcome to weibo task:')
         request.session['keyword'] = request.POST.get('keyword')
@@ -334,20 +331,35 @@ def make_weibo_task(request):
             if info_dict is not None:
                 request.session['uid'] = info_dict['uid']
                 request.session['uname'] = info_dict['uname']
-                # request.session['start_date']='2019-06'
-                # request.session['end_date']='2019-07'
-                request.session['folder_name'] = create_directory_weibo(request.session['uname'])
-                
+                request.session['folder_name'] = create_directory_weibo(request.session['uname'])             
                 request.session['status'] = 'not finished'
                 print('before sumission :',request.session.items())
-                request.session['status'] = crawl_weibo(request.session['uid'],request.session['folder_name']) 
-                print('after sumission :',request.session.items())
                 request.session.modified = True
-                data = {
-                    "Is_submitted": True,
-                }       
+                # asyncio.set_event_loop(asyncio.new_event_loop())
+                # loop = asyncio.get_event_loop()
+                # task = asyncio.ensure_future(crawl_weibo(request.session['uid'],request.session['folder_name']))
+                # loop.run_until_complete(task)
+                crawl_weibo(request.session['uid'],request.session['folder_name'])
+                print('after sumission :',request.session.items())
+                # loop.close()     
     
-    return JsonResponse(data)
+                download_folder = process_download_folder_weibo(request.session['folder_name'])
+                print('download_folder',download_folder )
+        
+                context = {
+                    'keyword':  request.session['keyword'],
+                    'folder': download_folder  # not empty only if there are downloads
+                }
+
+        # import subprocess
+
+        # subprocess.run(['python', r'./weibocrawler/weibo_crawler.py', uid],stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        # runpy.run_path(r'./weibocrawler/weibo_crawler.py', run_name='__main__')
+
+        request.session['keyword'] = request.session['start_date'] = request.session['end_date'] = request.session['folder_name'] = request.session['task_type']=''
+        resultTemplate = 'main/weiboresult.html'
+    return render(request, resultTemplate, context)
+
 
 @csrf_exempt
 def downloaded(request):
@@ -376,6 +388,7 @@ def downloaded(request):
 
 
     elif request.session['task_type'] == 'weibo':
+        resultTemplate = 'main/weiboresult.html'
         while request.session['status'] is not 'finished':
             print('this is a weibo task')
             time.sleep(5)
@@ -384,8 +397,7 @@ def downloaded(request):
             print('crawl status update loop: ', request.session['status'])
         download_folder = process_download_folder_weibo(request.session['folder_name'])
         print('download_folder',download_folder )
-        resultTemplate = 'main/weiboresult.html'
-    
+        
         context = {
             'keyword':  request.session['keyword'],
             'folder': download_folder  # not empty only if there are downloads
@@ -484,7 +496,7 @@ def process_download_folder_weibo(folder_name):
     download_folder = ''
 
     if files:
-        create_zip(download_path_full, folder_name + '.zip')
+        # create_zip(download_path_full, folder_name + '.zip')
         download_folder = folder_name
 
     return download_folder
@@ -535,8 +547,10 @@ def cancel(request):
         scrapyd.cancel('default', request.session['task_id'])
         delete_folder(RESULTS_PATH,request.session['folder_name'])
     elif request.session['task_type'] == 'weibo':
+        
         cancel_weibo_crawl()
         delete_folder(WEIBO_RESULTS_PATH,request.session['folder_name'])
+        print('weibo task cancel')
     request.session['keyword'] = request.session['start_date'] = request.session[
         'end_date'] = request.session['folder_name'] = request.session['task_id'] = request.session['task_type'] = ''
 
@@ -754,7 +768,6 @@ class TiebaHistoryData(APIView):
 
         return Response(data)
 
-
 # To be added weibo 9
 class WeiboHistoryData(APIView):
     authentication_classes = []
@@ -763,7 +776,6 @@ class WeiboHistoryData(APIView):
     def get(self, request, format=None):
         data = get_weibo_history()
         return Response(data)
-
 
 # To be added weibo 10
 class WeiboTableData(APIView):
@@ -774,7 +786,6 @@ class WeiboTableData(APIView):
         folder_name = request.GET.get('folder', None)
         data = get_weibos_by_user(folder_name)
         return Response(data)
-
 
 class KeywordSearchData(APIView):
     authentication_classes = []

@@ -1,17 +1,18 @@
-function submit_task(
-    keyword,
-  ) {
-    $.ajax({
-      type: "POST",
-      async: false,
-      url: "/main/weibo/",
-      data: {
-        keyword: keyword,
-      },
-      dataType: "json",
-      success: function(data) {}
-    });
-  }
+// function submit_task(
+//     keyword,
+//   ) {
+//     $.ajax({
+//       type: "POST",
+//       async: true,
+//       url: "/main/weibo/",
+//       data: {
+//         keyword: keyword,
+//       },
+//       dataType: "json",
+//       success: function(data) {}
+//     });
+//   }
+
   
   function validate() {
     var keyword = document.forms["weibo_form"]["keyword"].value;
@@ -45,9 +46,9 @@ function submit_task(
   
     if (Is_overrided) {
       
-      submit_task(
-        keyword,
-        );
+      // submit_task(
+      //   keyword,
+      //   );
       downloadView();
     } else {
       return false;
