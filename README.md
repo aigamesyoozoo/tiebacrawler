@@ -31,7 +31,6 @@ pip install -r requirements.txt
 - To obtain your IP address, open Command Prompt, type: `ipconfig`, find the value for _IPv4 Address_
 - This is necessary if your want to allow other computers to access your server. If you are the only user, you can keep `ALLOWED HOSTS = []` as an empty list.
 
-5. Enable proxy rotation
 
 
 ## Deployment
