@@ -7,6 +7,7 @@ from copy import deepcopy
 import re
 from GTDjango.settings import WEIBO_RESULTS_PATH,PROXIES_PATH
 import os
+import subprocess
 
 global status
 status = 'not finished'
@@ -24,16 +25,13 @@ def use_proxy(url, proxy_addr):
 	proxy = urllib.request.ProxyHandler({'http': proxy_addr})
 	opener = urllib.request.build_opener(proxy, urllib.request.HTTPHandler)
 	urllib.request.install_opener(opener)
-	try:
-		data = urllib.request.urlopen(req).read().decode('utf-8', 'ignore')
-	except Exception as e:
-		print(e)
-		data = None
+	data = urllib.request.urlopen(req).read().decode('utf-8', 'ignore')
 	return data
 
 # get container id for content crawling
 def get_containerid(url, proxy_addr):
 	# url = 'https://m.weibo.cn/api/container/getIndex?type=uid&value='+id
+    
 	data = use_proxy(url, proxy_addr)
 	content = json.loads(data).get('data')
 	for data in content.get('tabsInfo').get('tabs'):
@@ -70,7 +68,7 @@ def get_userInfo(id, proxy_pool):
 			"微博等级":urank
 		}
 	except Exception as e:
-		print(e)
+		print('get_userInfo:',e)
 		get_userInfo(id, proxy_pool)
 
 	pass
@@ -88,12 +86,13 @@ def get_weibo(id, proxy_pool, folder_name, page=1, range=-1):
 
 	# if there is weibo content
 	# while date_time_in_range:
+	exception_count = 0
 	while True:
-		if(status == 'cancel'):
+		if(status == 'cancel' or exception_count > 10):   # Crawling task will be killed if exception(mainly HTTP Error 418) continously occurs more than 10 times
 			break
 		try:
 			proxy_addr = next(proxy_pool)
-			# print('proxy addr:',proxy_addr)
+			print('proxy addr:',proxy_addr)
 			weibo_url = f"{url}&containerid={get_containerid(url, proxy_addr)}&page={page}"
 			# print(f"accessing {weibo_url}")
 			# construct urls
@@ -175,19 +174,24 @@ def get_weibo(id, proxy_pool, folder_name, page=1, range=-1):
 							json.dump(output_dict, f)
 				page += 1
 				time.sleep(0.05)
+				exception_count = 0
 			else:
 				break
 		except Exception as e:
-			print(e)
+			print('get_weibo',e)
+			exception_count += 1
+			
 
 def crawl_weibo(uid,folder_name):
 	global status	
 
 	# time.sleep(3) # comment out this if not using jupyter
-	os.chdir(PROXIES_PATH)
-	with open('proxies.txt','r') as f:
-	    proxies = [line.strip('\n') for line in f.readlines()]
-	# proxies = ['179.189.192.22:3129','216.183.40.241:39072','116.196.90.181:3128','123.206.175.30:808','179.189.125.222:8080','119.191.79.46:80','139.255.57.33:3128']
+	# os.chdir(PROXIES_PATH)
+	# with open('proxies.txt','r') as f:
+	#     proxies = [line.strip('\n') for line in f.readlines()]
+		
+	proxy_tool_path = (PROXIES_PATH /'proxy_tool.py').resolve()
+	proxies = subprocess.check_output(['python',str(proxy_tool_path)]).decode("utf-8").split()  # bytes
 	proxy_pool = cycle(proxies)
 
 	# click on date link to get id
@@ -200,7 +204,8 @@ def crawl_weibo(uid,folder_name):
 	for id in ids:
 		# proxy_addr = next(proxy_pool)
 		# print('proxy: '+proxy_addr)
-		profiles.append(get_userInfo(id, proxy_pool))
+		
+		# profiles.append(get_userInfo(id, proxy_pool))
 		# containerid = get_containerid(id, proxy_addr)
 		get_weibo(id, proxy_pool, folder_name)
 

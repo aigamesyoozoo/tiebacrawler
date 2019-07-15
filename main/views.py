@@ -12,7 +12,7 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
-from GTDjango.settings import CHROMEDRIVER_PATH, TIEBACOUNT_PATH, RESULTS_PATH
+from GTDjango.settings import CHROMEDRIVER_PATH, TIEBACOUNT_PATH, RESULTS_PATH, PROXIES_PATH
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -34,6 +34,7 @@ import asyncio
 from bs4 import BeautifulSoup
 import urllib.request
 from urllib.parse import quote
+
 
 import zipfile
 scrapyd = ScrapydAPI('http://localhost:6800')
@@ -89,9 +90,12 @@ def get_weibo_userid(keyword):
     for user in users:
         if user.select('.name .em') is not None:
             names.update({''.join(user.find('a',{"class":'name'}).text).strip() : user.find('a',{"class":'s-btn-c'})["uid"]})
-    uname = keyword if keyword in names.keys() else names.keys()[0] # if the exact username is not in the suggested list, crawl the first name in suggest list
-
-    info_dict = {'uname': uname,'uid':names[uname]}
+    if names != {}:
+        name_keys = list(names.keys())
+        uname = keyword if keyword in names.keys() else name_keys[0] # if the exact username is not in the suggested list, crawl the first name in suggest list
+        info_dict = {'uname': uname,'uid':names[uname]}
+    else:
+        info_dict = None
     print(info_dict)
     return info_dict
 
@@ -223,9 +227,6 @@ def get_related_forum_one_kw(browser, keyword):
     search_textbox.clear()
     search_textbox.send_keys(keyword)
     time.sleep(1)  # for fully rendering js
-    # relevant_forums_title = []
-    # relevant_forums_webelements = []
-    # relevant_forums_data = []
     webelements_json = []
     relevant_forums_webelements = browser.find_elements_by_css_selector(
         ".suggestion_list > li")
@@ -260,7 +261,8 @@ def validate_Isexisted(request):
             dir_list = next(os.walk(WEIBO_RESULTS_PATH))[1]
             # start_date = '2019-06'
             # end_date = '2019-07'
-            keyword = get_weibo_userid(request.POST.get('keyword', None))['uname']
+            info_dict = get_weibo_userid(request.POST.get('keyword', None))
+            keyword = info_dict['uname'] if info_dict is not None else ''
         
             folder_name = keyword
 
@@ -335,23 +337,22 @@ def make_weibo_task(request):
                 request.session['uname'] = info_dict['uname']
                 request.session['weibo_folder_name'] = create_directory_weibo(request.session['uname'])             
                 request.session['weibo_status'] = 'not finished'
-                print('before sumission :',request.session.items())
+                # print('before sumission :',request.session.items())
                 request.session.modified = True
-                # asyncio.set_event_loop(asyncio.new_event_loop())
-                # loop = asyncio.get_event_loop()
-                # task = asyncio.ensure_future(crawl_weibo(request.session['uid'],request.session['folder_name']))
-                # loop.run_until_complete(task)
-                # proxies = get_proxies()
+                                
                 crawl_weibo(request.session['uid'],request.session['weibo_folder_name'])
-                print('after sumission :',request.session.items())
-                # loop.close()     
+                # print('after sumission :',request.session.items())  
     
                 download_folder = process_download_folder_weibo(request.session['weibo_folder_name'])
-                print('download_folder',download_folder )
-        
+                # print('download_folder：',download_folder )
+                
                 context = {
                     'keyword':  request.session['uname'], #request.session['keyword'],
                     'folder': download_folder  # not empty only if there are downloads
+                }
+            else:
+                context = {
+                    'keyword':  request.session['weibo_keyword'],
                 }
 
     

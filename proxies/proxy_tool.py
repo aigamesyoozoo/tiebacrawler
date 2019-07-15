@@ -23,11 +23,10 @@ proxies = list(map(lambda x: ':'.join(map(str, x)), list(broker.unique_proxies.k
 # proxy_pool = cycle(list(broker.unique_proxies.keys()))
 
 proxy_pool = cycle(proxies)
-# print(proxy_pool)
-with open('proxies.txt', 'w') as f:
-    for proxy in proxies:
-        f.write(proxy+'\n')
-time.sleep(5)
+#with open('proxies.txt', 'w') as f:
+#    for proxy in proxies:
+#        f.write(proxy+'\n')
+#time.sleep(5)
 
-# for i in range(20):
-# 	print(next(proxy_pool))
+for i in range(300):
+    print(next(proxy_pool))

@@ -5,6 +5,7 @@ import sys
 import datetime
 import django
 
+
 # DJANGO INTEGRATION
 
 sys.path.append(os.path.dirname(os.path.abspath('.')))
@@ -34,14 +35,23 @@ NEWSPIDER_MODULE = 'webcrawler.spiders'
 #USER_AGENT = 'webcrawler (+http://www.yourdomain.com)'
 USER_AGENT = 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
 
-# DOWNLOADER_MIDDLEWARES = {
-#     # rotate user agent
-#     'scrapy.downloadermiddlewares.useragent.UserAgentMiddleware': None,
-#     'scrapy_user_agents.middlewares.RandomUserAgentMiddleware': 400,
-#     #rotate ip
-#     'scrapy_proxy_pool.middlewares.ProxyPoolMiddleware': 610,
-#     'scrapy_proxy_pool.middlewares.BanDetectionMiddleware': 620
-# }
+
+# ROTATING_PROXY_LIST_PATH =  (script_path / '../../proxies/proxies.txt').resolve()
+ROTATING_PROXY_LIST_PATH = r'C:\tiebacrawler\proxies\proxies.txt'
+
+DOWNLOADER_MIDDLEWARES = {
+    # rotate user agent
+    # 'scrapy.downloadermiddlewares.useragent.UserAgentMiddleware': None,
+    # 'scrapy_user_agents.middlewares.RandomUserAgentMiddleware': 400,
+    # rotate ip
+    # 'rotating_proxies.middlewares.RotatingProxyMiddleware': 610,
+    # 'rotating_proxies.middlewares.BanDetectionMiddleware': 620,
+    # 'scrapy_proxy_pool.middlewares.ProxyPoolMiddleware': 610,
+    # 'scrapy_proxy_pool.middlewares.BanDetectionMiddleware': 620，
+    # 'scrapy.downloadermiddlewares.retry.RetryMiddleware': 90,
+    # 'scrapy_proxies.RandomProxy': 100,
+    # 'scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware': 110,
+}
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = False
@@ -122,7 +132,7 @@ FEED_EXPORT_ENCODING = 'utf-8'
 
 START_DATE = datetime.datetime.strptime("2019-03", '%Y-%m').date()
 END_DATE = datetime.datetime.strptime("2019-06", '%Y-%m').date()
-NUM_TIEZI = 300
+NUM_TIEZI = 700
 script_dir = os.path.dirname(__file__)  # <-- absolute dir the script is in
 rel_path = '../../results'
 FILE_PATH = os.path.join(script_dir, rel_path)
