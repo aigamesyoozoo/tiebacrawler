@@ -154,7 +154,9 @@ rel_path_results = '../results/'
 rel_path_tiebacount = rel_path_results + 'tieba_count.csv'
 RESULTS_PATH = (script_path / '../results/').resolve()
 WEIBO_RESULTS_PATH = (script_path / '../weiboresults/').resolve()
+PROXIES_PATH = (script_path / '../proxies/').resolve()
 TIEBACOUNT_PATH = (RESULTS_PATH / 'tieba_count.csv').resolve()
+
 CHROMEDRIVER_PATH = r'C:\Program Files\Chromedriver\chromedriver.exe'
 
 # rel_path_results = '../results/'

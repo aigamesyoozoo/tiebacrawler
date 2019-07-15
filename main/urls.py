@@ -16,7 +16,7 @@ urlpatterns = [
  path('history/weibo', views.history_weibo, name='history_weibo'), 
  path('validate/', views.validate_Isexisted, name='validate'), 
  path('downloaded/', views.downloaded, name='downloaded'), 
- path('downloaded/weibo', views.weibo_downloaded, name='weibodownloaded'), 
+#  path('downloaded/weibo', views.weibo_downloaded, name='weibodownloaded'), 
  path('csvdownload/', views.csvdownload, name='csvdownload'), 
  path('api/chart/analysis/', views.ChartData.as_view()), 
  path('api/chart/keywordsearch/', views.KeywordSearchData.as_view()), 
