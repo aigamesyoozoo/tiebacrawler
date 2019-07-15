@@ -1,4 +1,4 @@
-# Tieba Crawler
+# Tieba/Weibo Webcrawler
 
 # Setting up
 
@@ -17,7 +17,7 @@
 pip install -r requirements.txt
 ```
 
-- May have error for one of the packages, Twisted, as it requires C++ build tools.
+- There may be an error for one of the packages, Twisted, as it requires C++ build tools.
 - As such, it is recommended to download Visual Studio on your computer to ensure that C++ build tools is available.
 
 4. Configure host
@@ -27,6 +27,8 @@ pip install -r requirements.txt
 - Under `ALLOWED HOSTS = []`, change to your IP address and `'localhost'`
 - To obtain your IP address, open Command Prompt, type: `ipconfig`, find the value for _IPv4 Address_
 - This is necessary if your want to allow other computers to access your server. If you are the only user, you can keep `ALLOWED HOSTS = []` as an empty list.
+
+5. Enable proxy rotation
 
 # Deployment
 
