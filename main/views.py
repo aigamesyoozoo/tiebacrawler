@@ -39,7 +39,7 @@ from urllib.parse import quote
 import zipfile
 scrapyd = ScrapydAPI('http://localhost:6800')
 
-
+# url: /main
 def index(request):
     history = get_history()
     history_tieba = set()
@@ -49,6 +49,197 @@ def index(request):
     history_tieba_sorted.sort()
     return render(request, 'main/index.html', context={'history': history, 'history_tieba': history_tieba_sorted})
 
+def rehome(request, tieba):
+    if request.method == 'GET':
+        return render(request, 'main/home.html', {'forums': [tieba.replace('^', '/')]})
+
+# url: /main/home
+def home(request):
+    keyword = request.GET.get('kw')
+    tieba = request.GET.get('tieba')
+    forums = []  # cater for else condition
+    if keyword:
+        print('keyword', keyword)
+        forums = get_related_forums_by_selenium(keyword)
+        # forums = ['a', 'b', 'c', 'd']
+    elif tieba:
+        print('tieba', tieba)
+        forums = [tieba.replace('^', '/')]
+    return render(request, 'main/home.html', context={'forums': forums})
+
+# url: /main/history/tieba
+def history_tieba(request):
+    return render(request, 'main/history_tieba.html')
+
+# url: /main/history/weibo
+def history_weibo(request):
+    return render(request, 'main/history_weibo.html')
+
+# url:/main/validate
+@csrf_exempt
+def validate_isexisted(request):
+    if request.method == 'POST':
+        print('keyword',request.POST.get('keyword'))
+        print('validate',request.POST.get('task_type'))
+        if request.POST.get('task_type') == 'tieba':
+            dir_list = next(os.walk(RESULTS_PATH))[1]
+            keyword = request.POST.get('keyword', None)
+            start_date = format_date(request.POST.get(
+                'start_date_year', None), request.POST.get('start_date_month', None))
+            end_date = format_date(request.POST.get(
+                'end_date_year', None), request.POST.get('end_date_month', None))
+            keyword = request.POST.get('keyword', None)
+            folder_name = '_'.join([keyword, start_date, end_date])
+                
+        elif request.POST.get('task_type') == 'weibo':
+            request.session['status'] = 'not finished'
+            dir_list = next(os.walk(WEIBO_RESULTS_PATH))[1]
+            # start_date = '2019-06'
+            # end_date = '2019-07'
+            info_dict = get_weibo_userid(request.POST.get('keyword', None))
+            keyword = info_dict['uname'] if info_dict is not None else ''
+        
+            folder_name = keyword
+
+        if folder_name not in dir_list:
+            data = {
+                'Is_existed': False
+            }
+        else:
+            data = {
+                'Is_existed': True
+            }
+        return JsonResponse(data)
+
+# url: /main/crawl/tieba
+@csrf_exempt
+@require_http_methods(['POST', 'GET'])  # only get and post
+def make_tieba_task(request):
+    '''
+    Able to crawl multiple tieba concurrently by browser.
+    '''
+    if request.method == 'POST':
+        print('welcome to tieba task:')
+        keyword_full = request.POST.get('keyword', None)
+        # remove the 'ba' character as it leads to a different link
+        keyword = keyword_full[:-1]
+        start_date = format_date(request.POST.get(
+            'start_date_year', None), request.POST.get('start_date_month', None))
+        end_date = format_date(request.POST.get(
+            'end_date_year', None), request.POST.get('end_date_month', None))
+        print('NEW>>>', start_date, end_date)
+
+        status = 'finished'
+        if keyword and start_date and end_date:
+            folder_name = create_directory(keyword_full, start_date, end_date)
+            task_id, unique_id, status = schedule( # shedule tieba crawling task
+                keyword, start_date, end_date, folder_name)
+
+            print(task_id, unique_id, status)
+            request.session['task_type'] = 'tieba'
+            request.session['task_id'] = task_id
+            request.session['status'] = status
+            request.session['folder_name'] = folder_name
+            request.session['keyword'] = keyword
+            request.session['start_date'] = start_date
+            request.session['end_date'] = end_date
+            request.session.modified = True
+            data = {
+                "Is_submitted": True,
+                "task_id": task_id
+            }
+        else:
+            data = {
+                "Is_submitted": False
+            }
+        return JsonResponse(data)
+
+# url: /main/crawl/weibo
+@csrf_exempt
+def make_weibo_task(request):
+    '''
+    Currently can only crawl one weibo task at a time.
+    '''
+    if request.method == "POST":
+        print('welcome to weibo task:')
+        request.session['weibo_keyword'] = request.POST.get('keyword')
+        if request.session['weibo_keyword']:
+            request.session['task_type'] = 'weibo'
+            print('weibo_keyword',request.session['weibo_keyword'])
+            print('task_type:',request.session['task_type'] )
+            info_dict = get_weibo_userid(request.session['weibo_keyword'])
+            if info_dict is not None:
+                request.session['uid'] = info_dict['uid']
+                request.session['uname'] = info_dict['uname']
+                request.session['weibo_folder_name'] = create_directory_weibo(request.session['uname'])             
+                request.session['weibo_status'] = 'not finished'
+                request.session.modified = True
+                                
+                crawl_weibo(request.session['uid'],request.session['weibo_folder_name']) # make weibo task 
+    
+                download_folder = process_download_folder_weibo(request.session['weibo_folder_name'])
+                
+                context = {
+                    'keyword':  request.session['uname'], #request.session['keyword'],
+                    'folder': download_folder  # not empty only if there are downloads
+                }
+            else:
+                context = {
+                    'keyword':  request.session['weibo_keyword'],
+                }
+
+    
+        request.session['weibo_status'] = request.session['weibo_keyword'] =  request.session['weibo_folder_name'] = request.session['task_type']=''
+        request.session.modified = True
+        resultTemplate = 'main/weiboresult.html'
+    return render(request, resultTemplate, context)
+
+# url: /main/dowloaded
+@csrf_exempt
+def result_tieba(request):
+    # Currently this only handle tieba task, weibo task will be handled by make_weibo_task itself
+    download_folder = ''
+    print('downloaded:',request.session.items())
+    
+    while request.session['status'] is not 'finished':
+        # print('this is a tieba task')
+        time.sleep(10)
+        request.session['status'] = get_crawl_status(
+                request)
+        request.session.modified = True
+        print('crawl status update loop: ', request.session['status'])
+
+    all_forums, download_folder = process_download_folder(
+            request.session['folder_name'])  # no longer using all_forums, as data is obtained by ajax instead
+    resultTemplate = 'main/result.html'
+        
+    context = {
+        'keyword':  request.session['keyword'],
+        'start_date': request.session['start_date'],
+        'end_date': request.session['end_date'],
+        'folder': download_folder  # not empty only if there are downloads
+    }
+    
+    request.session['keyword'] = request.session['start_date'] = request.session['end_date'] = request.session['folder_name'] = request.session['task_type']=''
+    request.session.modified = True
+    return render(request, resultTemplate, context)
+
+# url: /main/cancel
+def cancel(request):
+    print('cancel module:',request.session['task_type'] )
+    if request.session['task_type'] == 'tieba':
+        scrapyd.cancel('default', request.session['task_id'])
+        delete_folder(RESULTS_PATH,request.session['folder_name'])
+
+    # elif request.session['task_type'] == 'weibo':
+    else: # weibo     
+        cancel_weibo_crawl()
+        # delete_folder(WEIBO_RESULTS_PATH,request.session['folder_name'])
+        print('weibo task cancel')
+    request.session['keyword'] = request.session['start_date'] = request.session[
+        'end_date'] = request.session['folder_name'] = request.session['task_id'] = request.session['task_type'] = ''
+    request.session.modified = True
+    return render(request, 'main/cancel.html')
 
 def get_tiebaname_from_folder(folder):
     parts = folder.split('_')
@@ -99,17 +290,6 @@ def get_weibo_userid(keyword):
     print(info_dict)
     return info_dict
 
-
-def weibo_history(request):
-    # get a lsit of dicts with {user:,date:,data:[{contents:,counts:,counts:,counts:}]}
-
-    folder_name = request.GET.get('kw')
-    weibos = get_weibos_by_user(folder_name)
-    # print(weibos)
-    context={
-        'weibos':weibos
-    }
-    return render(request,'main/weibohistory.html',context)
 
 def get_weibos_by_user(folder_name):
     all_weibos = []
@@ -166,14 +346,6 @@ def create_zip(curr_path, zip_name):
     zipObj.close()
 
 
-def history_tieba(request):
-    return render(request, 'main/history_tieba.html')
-
-
-def history_weibo(request):
-    return render(request, 'main/history_weibo.html')
-
-
 def read_csv_as_dict_list(file_to_read, headers):
     dict_list = []
     with open(file_to_read, 'r', encoding='utf-8') as f:
@@ -181,25 +353,6 @@ def read_csv_as_dict_list(file_to_read, headers):
         for line in reader:
             dict_list.append(line)
     return dict_list
-
-
-def rehome(request, tieba):
-    if request.method == 'GET':
-        return render(request, 'main/home.html', {'forums': [tieba.replace('^', '/')]})
-
-
-def home(request):
-    keyword = request.GET.get('kw')
-    tieba = request.GET.get('tieba')
-    forums = []  # cater for else condition
-    if keyword:
-        print('keyword', keyword)
-        forums = get_related_forums_by_selenium(keyword)
-        # forums = ['a', 'b', 'c', 'd']
-    elif tieba:
-        print('tieba', tieba)
-        forums = [tieba.replace('^', '/')]
-    return render(request, 'main/home.html', context={'forums': forums})
 
 
 def get_related_forums_by_selenium(keyword):
@@ -223,191 +376,26 @@ def get_related_forums_by_selenium(keyword):
 
 
 def get_related_forum_one_kw(browser, keyword):
-    search_textbox = browser.find_element_by_id("wd1")
-    search_textbox.clear()
-    search_textbox.send_keys(keyword)
-    time.sleep(1)  # for fully rendering js
-    webelements_json = []
-    relevant_forums_webelements = browser.find_elements_by_css_selector(
-        ".suggestion_list > li")
-    relevant_forums_data = [webelement.get_attribute(
-        "data-field") for webelement in relevant_forums_webelements]
-    if relevant_forums_data is not []:
-        for webelement_json in relevant_forums_data:
-            temp = json.loads(str(webelement_json))
-            webelements_json.append(temp)
-        relevant_forums_title = [webelement_json['sugValue'] +
-                                 '吧' for webelement_json in webelements_json if str(webelement_json['sugType']) in ["forum_item"]]
+    try:
+        search_textbox = browser.find_element_by_id("wd1")
+        search_textbox.clear()
+        search_textbox.send_keys(keyword)
+        time.sleep(1)  # for fully rendering js
+        webelements_json = []
+        relevant_forums_webelements = browser.find_elements_by_css_selector(
+            ".suggestion_list > li")
+        relevant_forums_data = [webelement.get_attribute(
+            "data-field") for webelement in relevant_forums_webelements]
+        if relevant_forums_data is not []:
+            for webelement_json in relevant_forums_data:
+                temp = json.loads(str(webelement_json))
+                webelements_json.append(temp)
+            relevant_forums_title = [webelement_json['sugValue'] +
+                                    '吧' for webelement_json in webelements_json if str(webelement_json['sugType']) in ["forum_item"]]
+    except Exception as e:
+        print(e)
+        get_related_forum_one_kw(browser, keyword)
     return relevant_forums_title
-
-
-@csrf_exempt
-def validate_Isexisted(request):
-    if request.method == 'POST':
-        print('keyword',request.POST.get('keyword'))
-        print('validate',request.POST.get('task_type'))
-        if request.POST.get('task_type') == 'tieba':
-            dir_list = next(os.walk(RESULTS_PATH))[1]
-            keyword = request.POST.get('keyword', None)
-            start_date = format_date(request.POST.get(
-                'start_date_year', None), request.POST.get('start_date_month', None))
-            end_date = format_date(request.POST.get(
-                'end_date_year', None), request.POST.get('end_date_month', None))
-            keyword = request.POST.get('keyword', None)
-            folder_name = '_'.join([keyword, start_date, end_date])
-                
-        elif request.POST.get('task_type') == 'weibo':
-            request.session['status'] = 'not finished'
-            dir_list = next(os.walk(WEIBO_RESULTS_PATH))[1]
-            # start_date = '2019-06'
-            # end_date = '2019-07'
-            info_dict = get_weibo_userid(request.POST.get('keyword', None))
-            keyword = info_dict['uname'] if info_dict is not None else ''
-        
-            folder_name = keyword
-
-        if folder_name not in dir_list:
-            data = {
-                'Is_existed': False
-            }
-        else:
-            data = {
-                'Is_existed': True
-            }
-        return JsonResponse(data)
-
-
-@csrf_exempt
-@require_http_methods(['POST', 'GET'])  # only get and post
-def make_tieba_task(request):
-    '''
-    Able to crawl multiple tieba concurrently by browser.
-    '''
-    if request.method == 'POST':
-        print('welcome to tieba task:')
-        keyword_full = request.POST.get('keyword', None)
-        # remove the 'ba' character as it leads to a different link
-        keyword = keyword_full[:-1]
-        start_date = format_date(request.POST.get(
-            'start_date_year', None), request.POST.get('start_date_month', None))
-        end_date = format_date(request.POST.get(
-            'end_date_year', None), request.POST.get('end_date_month', None))
-        print('NEW>>>', start_date, end_date)
-
-        status = 'finished'
-        if keyword and start_date and end_date:
-            folder_name = create_directory(keyword_full, start_date, end_date)
-            task_id, unique_id, status = schedule(
-                keyword, start_date, end_date, folder_name)
-
-            print(task_id, unique_id, status)
-            request.session['task_type'] = 'tieba'
-            request.session['task_id'] = task_id
-            request.session['status'] = status
-            request.session['folder_name'] = folder_name
-            request.session['keyword'] = keyword
-            request.session['start_date'] = start_date
-            request.session['end_date'] = end_date
-            request.session.modified = True
-            data = {
-                "Is_submitted": True,
-                "task_id": task_id
-            }
-        else:
-            data = {
-                "Is_submitted": False
-            }
-        return JsonResponse(data)
-
-@csrf_exempt
-def make_weibo_task(request):
-    '''
-    Currently can only crawl one weibo task at a time.
-    '''
-    if request.method == "POST":
-        print('welcome to weibo task:')
-        request.session['weibo_keyword'] = request.POST.get('keyword')
-        if request.session['weibo_keyword']:
-            request.session['task_type'] = 'weibo'
-            print('weibo_keyword',request.session['weibo_keyword'])
-            print('task_type:',request.session['task_type'] )
-            info_dict = get_weibo_userid(request.session['weibo_keyword'])
-            if info_dict is not None:
-                request.session['uid'] = info_dict['uid']
-                request.session['uname'] = info_dict['uname']
-                request.session['weibo_folder_name'] = create_directory_weibo(request.session['uname'])             
-                request.session['weibo_status'] = 'not finished'
-                # print('before sumission :',request.session.items())
-                request.session.modified = True
-                                
-                crawl_weibo(request.session['uid'],request.session['weibo_folder_name'])
-                # print('after sumission :',request.session.items())  
-    
-                download_folder = process_download_folder_weibo(request.session['weibo_folder_name'])
-                # print('download_folder：',download_folder )
-                
-                context = {
-                    'keyword':  request.session['uname'], #request.session['keyword'],
-                    'folder': download_folder  # not empty only if there are downloads
-                }
-            else:
-                context = {
-                    'keyword':  request.session['weibo_keyword'],
-                }
-
-    
-        request.session['weibo_status'] = request.session['weibo_keyword'] =  request.session['weibo_folder_name'] = request.session['task_type']=''
-        request.session.modified = True
-        resultTemplate = 'main/weiboresult.html'
-    return render(request, resultTemplate, context)
-
-
-@csrf_exempt
-def downloaded(request):
-    # Currently this only handle tieba task, weibo task will be handled by make_weibo_task itself
-    download_folder = ''
-    print('downloaded:',request.session.items())
-    
-    # if request.session['task_type'] == 'tieba':
-    while request.session['status'] is not 'finished':
-        # print('this is a tieba task')
-        time.sleep(10)
-        request.session['status'] = get_crawl_status(
-                request)
-        request.session.modified = True
-        print('crawl status update loop: ', request.session['status'])
-
-    all_forums, download_folder = process_download_folder(
-            request.session['folder_name'])  # no longer using all_forums, as data is obtained by ajax instead
-    resultTemplate = 'main/result.html'
-        
-    context = {
-        'keyword':  request.session['keyword'],
-        'start_date': request.session['start_date'],
-        'end_date': request.session['end_date'],
-        'folder': download_folder  # not empty only if there are downloads
-    }
-
-
-    # elif request.session['task_type'] == 'weibo': 
-    #     resultTemplate = 'main/weiboresult.html'
-    #     while request.session['status'] is not 'finished':
-    #         print('this is a weibo task')
-    #         time.sleep(5)
-    #         request.session['status'] = get_weibo_status()
-    #         request.session.modified = True
-    #         print('crawl status update loop: ', request.session['status'])
-    #     download_folder = process_download_folder_weibo(request.session['folder_name'])
-    #     print('download_folder',download_folder )
-        
-    #     context = {
-    #         'keyword':  request.session['keyword'],
-    #         'folder': download_folder  # not empty only if there are downloads
-    #     }
-    
-    request.session['keyword'] = request.session['start_date'] = request.session['end_date'] = request.session['folder_name'] = request.session['task_type']=''
-    request.session.modified = True
-    return render(request, resultTemplate, context)
 
 def format_date(year, month):
     return '-'.join([year, month.zfill(2)])
@@ -418,8 +406,9 @@ def process_scraped_content(folder_name):
     file_to_process = 'replies.csv'
     file_to_process_full_path = (
         RESULTS_PATH / folder_name / file_to_process).resolve()
-
+    print('before get keyword summary')
     analysis = get_keyword_summary(file_to_process_full_path)
+    print('after get keyword summary')
     summary, keywords, sentiments, stats = format_analysis_for_csv(analysis)
 
     write_to_csv(folder_full_path, 'summary.csv', summary)
@@ -445,7 +434,9 @@ def process_download_folder(folder_name):
         files = os.listdir(download_path_full)
 
         if 'replies.csv' in files:
+            print('before process_scraped_content')
             process_scraped_content(folder_name)
+            print('after process_scraped_content')
 
         if files:
             create_zip(download_path_full, folder_name + '.zip')
@@ -515,24 +506,6 @@ def get_crawl_status(request):
 def delete_folder(path,name):
     os.chdir(path)
     shutil.rmtree(name)
-
-
-def cancel(request):
-    print('cancel module:',request.session['task_type'] )
-    if request.session['task_type'] == 'tieba':
-        scrapyd.cancel('default', request.session['task_id'])
-        delete_folder(RESULTS_PATH,request.session['folder_name'])
-
-    # elif request.session['task_type'] == 'weibo':
-    else: # weibo     
-        cancel_weibo_crawl()
-        # delete_folder(WEIBO_RESULTS_PATH,request.session['folder_name'])
-        print('weibo task cancel')
-    request.session['keyword'] = request.session['start_date'] = request.session[
-        'end_date'] = request.session['folder_name'] = request.session['task_id'] = request.session['task_type'] = ''
-    request.session.modified = True
-    return render(request, 'main/cancel.html')
-
 
 def get_keyword_summary(file_path):
 
@@ -667,7 +640,6 @@ class TiebaHistoryData(APIView):
 
         return Response(data)
 
-# To be added weibo 9
 class WeiboHistoryData(APIView):
     authentication_classes = []
     permission_classes = []
@@ -676,7 +648,6 @@ class WeiboHistoryData(APIView):
         data = { 'users' : get_weibo_history() }
         return Response(data)
 
-# To be added weibo 10
 class WeiboTableData(APIView):
     authentication_classes = []
     permission_classes = []
