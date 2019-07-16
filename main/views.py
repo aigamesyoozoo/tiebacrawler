@@ -13,6 +13,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 
 from GTDjango.settings import CHROMEDRIVER_PATH, TIEBACOUNT_PATH, RESULTS_PATH, PROXIES_PATH
+from .models import WeiboTask
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -37,6 +38,7 @@ from urllib.parse import quote
 
 
 import zipfile
+
 scrapyd = ScrapydAPI('http://localhost:6800')
 
 # url: /main
@@ -155,11 +157,10 @@ def make_tieba_task(request):
         return JsonResponse(data)
 
 # url: /main/crawl/weibo
+'''
 @csrf_exempt
 def make_weibo_task(request):
-    '''
-    Currently can only crawl one weibo task at a time.
-    '''
+
     if request.method == "POST":
         print('welcome to weibo task:')
         request.session['weibo_keyword'] = request.POST.get('keyword')
@@ -193,6 +194,35 @@ def make_weibo_task(request):
         request.session.modified = True
         resultTemplate = 'main/weiboresult.html'
     return render(request, resultTemplate, context)
+'''
+
+
+# url: /main/crawl/weibo
+@csrf_exempt
+def make_weibo_task(request):
+    if request.method == "POST":
+        kw = request.POST.get('keyword')
+        if kw:
+            info_dict = get_weibo_userid(kw)
+            if info_dict:
+                current_task = WeiboTask(uid=info_dict['uid'],uname=info_dict['uname'],status='not finished',folder_name=create_directory_weibo(info_dict['uname']))
+                current_task.save() # save to database containing current weibo tasks               
+                crawl_weibo(current_task.uid,current_task.folder_name) # method definition in weibocrawler.py
+                download_folder = process_download_folder_weibo(current_task.folder_name)
+                time.sleep(10)
+                download_folder='asdfasf'
+                context = {
+                    'keyword':  current_task.uname,
+                    'folder': download_folder  # not empty only if there are downloads
+                }
+                current_task.delete() # remove from database, indicating that crawl has completed
+            else:
+                context = {
+                    'keyword':  kw,
+                } 
+        resultTemplate = 'main/weiboresult.html'
+    return render(request, resultTemplate, context)
+
 
 # url: /main/dowloaded
 @csrf_exempt
@@ -330,10 +360,10 @@ def get_history():
         zip_name = folder + '.zip'
         curr_path = (RESULTS_PATH / folder).resolve()
         files = os.listdir(curr_path)
-        if files:
-            if zip_name not in files:
-                create_zip(curr_path, zip_name)
-            folders.append(folder)
+        if files and zip_name in files:
+            # if zip_name not in files:
+            #     create_zip(curr_path, zip_name)
+            folders.append(folder) # folders with zips indicate that the processing of scraped data has completed
     return folders
 
 
@@ -681,9 +711,10 @@ class KeywordSearchData(APIView):
 
 def folderExists(folder):
     history = get_history()
-    if not history or folder not in history:
-        return False
-    return True
+    return history and folder in history
+    # if not history or folder not in history:
+    #     return False
+    # return True
 
 
 def read_analysis_from_csv(folder):

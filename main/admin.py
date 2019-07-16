@@ -1,4 +1,4 @@
 from django.contrib import admin
-# from .models import Comment, Reply
+from .models import WeiboTask
 # Register your models here.
-# admin.site.register([Comment,Reply])
+admin.site.register(WeiboTask)
