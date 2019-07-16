@@ -53,7 +53,7 @@ def rehome(request, tieba):
     if request.method == 'GET':
         return render(request, 'main/home.html', {'forums': [tieba.replace('^', '/')]})
 
-# url: /main/home
+# url: /main/home/
 def home(request):
     keyword = request.GET.get('kw')
     tieba = request.GET.get('tieba')
@@ -67,20 +67,23 @@ def home(request):
         forums = [tieba.replace('^', '/')]
     return render(request, 'main/home.html', context={'forums': forums})
 
-# url: /main/history/tieba
+# url: /main/history/tieba/
 def history_tieba(request):
     return render(request, 'main/history_tieba.html')
 
-# url: /main/history/weibo
+# url: /main/history/weibo/
 def history_weibo(request):
     return render(request, 'main/history_weibo.html')
 
-# url:/main/validate
+# url:/main/validate/
 @csrf_exempt
 def validate_isexisted(request):
+    '''
+    To check if it is a duplicate task for tieba and weibo. 
+    '''
     if request.method == 'POST':
-        print('keyword',request.POST.get('keyword'))
-        print('validate',request.POST.get('task_type'))
+        # print('keyword',request.POST.get('keyword'))
+        # print('validate',request.POST.get('task_type'))
         if request.POST.get('task_type') == 'tieba':
             dir_list = next(os.walk(RESULTS_PATH))[1]
             keyword = request.POST.get('keyword', None)
@@ -88,7 +91,7 @@ def validate_isexisted(request):
                 'start_date_year', None), request.POST.get('start_date_month', None))
             end_date = format_date(request.POST.get(
                 'end_date_year', None), request.POST.get('end_date_month', None))
-            keyword = request.POST.get('keyword', None)
+            # keyword = request.POST.get('keyword', None)
             folder_name = '_'.join([keyword, start_date, end_date])
                 
         elif request.POST.get('task_type') == 'weibo':
@@ -111,12 +114,12 @@ def validate_isexisted(request):
             }
         return JsonResponse(data)
 
-# url: /main/crawl/tieba
+# url: /main/crawl/tieba/
 @csrf_exempt
 @require_http_methods(['POST', 'GET'])  # only get and post
 def make_tieba_task(request):
     '''
-    Able to crawl multiple tieba concurrently by browser.
+    Able to crawl multiple tieba concurrently by browser. This will only handle making task, 'main/result/tieba/' will wait for the result.
     '''
     if request.method == 'POST':
         print('welcome to tieba task:')
@@ -154,11 +157,11 @@ def make_tieba_task(request):
             }
         return JsonResponse(data)
 
-# url: /main/crawl/weibo
+# url: /main/crawl/weibo/
 @csrf_exempt
 def make_weibo_task(request):
     '''
-    Currently can only crawl one weibo task at a time.
+    Currently can only crawl one weibo task at a time. This will handle both making task and waiting result for weibo.
     '''
     if request.method == "POST":
         print('welcome to weibo task:')
@@ -194,10 +197,12 @@ def make_weibo_task(request):
         resultTemplate = 'main/weiboresult.html'
     return render(request, resultTemplate, context)
 
-# url: /main/dowloaded
+# url: /main/result/tieba/
 @csrf_exempt
 def result_tieba(request):
-    # Currently this only handle tieba task, weibo task will be handled by make_weibo_task itself
+    '''
+    This will wait result for tieba.
+    '''
     download_folder = ''
     print('downloaded:',request.session.items())
     
@@ -224,8 +229,13 @@ def result_tieba(request):
     request.session.modified = True
     return render(request, resultTemplate, context)
 
-# url: /main/cancel
+# url: /main/cancel/
 def cancel(request):
+    '''
+    Handle canceling task for both weibo and tieba.
+    For tieba: delete folder and stop the scrapy.
+    For weibo: stop the crawling but folder will be remained since session can't be passed when the /crawl/weibo/ haven't finished. 
+    '''
     print('cancel module:',request.session['task_type'] )
     if request.session['task_type'] == 'tieba':
         scrapyd.cancel('default', request.session['task_id'])
@@ -269,6 +279,11 @@ def get_weibo_history():
     return list(set(dir_list))
 
 def get_weibo_userid(keyword):
+    '''
+        Return username and userid, crawling will rely on the userid.
+        Notice:
+            if the exact username is not in the suggested list, crawl the first name in suggest list.
+    '''
     # url = "https://s.weibo.com/weibo?q=" + keyword +"&Refer=SWeibo_box"
     url = "https://s.weibo.com/user?q=" + keyword # +"&Refer=SUer_box"
     # url = quote(url, safe=string.printable)
@@ -292,6 +307,9 @@ def get_weibo_userid(keyword):
 
 
 def get_weibos_by_user(folder_name):
+    '''
+        Return list of formatted posts of this user.
+    '''
     all_weibos = []
     # all_cards = []
     # dir_list = next(os.walk(WEIBO_RESULTS_PATH))[1]
@@ -356,6 +374,9 @@ def read_csv_as_dict_list(file_to_read, headers):
 
 
 def get_related_forums_by_selenium(keyword):
+    '''
+        Return list of relevant forums based on the keyword.
+    '''
     options = Options()
     options.headless = True
     browser = webdriver.Chrome(CHROMEDRIVER_PATH, chrome_options=options)
@@ -489,7 +510,9 @@ def create_directory_weibo(keyword):
     return name   
 
 def schedule(keyword, start_date, end_date, folder_name):
-    # global task
+    '''
+        Schedule scrapy task for tieba.
+    '''
     unique_id = str(uuid4())  # create a unique ID.
     settings = {
         'unique_id': unique_id,  # unique ID for each record for DB
@@ -500,6 +523,9 @@ def schedule(keyword, start_date, end_date, folder_name):
 
 
 def get_crawl_status(request):
+    '''
+        Get task status for tieba.
+    '''
     return scrapyd.job_status('default', request.session['task_id'])
 
 
