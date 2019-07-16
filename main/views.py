@@ -159,20 +159,13 @@ def make_tieba_task(request):
             }
         return JsonResponse(data)
 
-<<<<<<< HEAD
-# url: /main/crawl/weibo
 '''
-@csrf_exempt
-def make_weibo_task(request):
-
-=======
 # url: /main/crawl/weibo/
 @csrf_exempt
 def make_weibo_task(request):
-    '''
-    Currently can only crawl one weibo task at a time. This will handle both making task and waiting result for weibo.
-    '''
->>>>>>> 00d12843db1d58e289c2efa6fa8e06c85f4fe1e5
+    
+    #Currently can only crawl one weibo task at a time. This will handle both making task and waiting result for weibo.
+    
     if request.method == "POST":
         print('welcome to weibo task:')
         request.session['weibo_keyword'] = request.POST.get('keyword')
