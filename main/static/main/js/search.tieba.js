@@ -8,7 +8,7 @@ function submit_task(
   $.ajax({
     type: "POST",
     async: false,
-    url: "/main/crawl/",
+    url: "/main/crawl/tieba/",
     data: {
       keyword: keyword,
       start_date_year: start_date_year,
