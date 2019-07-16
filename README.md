@@ -2,18 +2,24 @@
 
 ## Setting up
 
-##### 1. Download chromedriver and put in Program Files
+##### 1. Install python and anaconda
+- Recommended to use the same versions used to develop this project
+- Python 3.7.1 : [Download link for Python as of 15 July 2019](https://www.python.org/downloads/)
+- Anaconda (for Python 3.7): [Download link for Anaconda as of 15 July 2019](https://www.anaconda.com/distribution/)
+
+##### 2. Download chromedriver and put in Program Files
 
 - [Download link for chromedriver as of 15 July 2019](http://chromedriver.chromium.org/downloads)
 - Place it in _C:\Program Files\Chromedriver\chromedriver.exe_, note the folder/filenames are case-sensitive.
 
 
-##### 2. _Recommended:_ Setup a virtualenv for this project
+##### 3. _Recommended:_ Setup a virtualenv for this project
+- [How to setup virtualenv](https://uoa-eresearch.github.io/eresearch-cookbook/recipe/2014/11/26/python-virtual-env/)
 
+##### 4. Install dependencies listed in requirements.txt
 
-##### 3. Install dependencies listed in requirements.txt
-
-- Activate your virtualenv e.g. `.\venv\Scripts\activate`
+- First, activate your virtualenv, if you are using one e.g. `.\venv\Scripts\activate`
+- Then,
 
 ```
 pip install -r requirements.txt
@@ -23,7 +29,7 @@ pip install -r requirements.txt
 - As such, it is recommended to download Visual Studio on your computer to ensure that C++ build tools is available.
 
 
-##### 4. Configure host
+##### 5. Configure host
 
 - Go to _\GTDjango_ sub-folder in the root folder and open _settings.py_ in an editor
 - _C:\Users\User\Documents\tiebacrawler\GTDjango\settings.py_
@@ -38,7 +44,6 @@ pip install -r requirements.txt
 
 ##### 1. Open Anaconda prompt x 2
 
-- [Download link for Anaconda as of 15 July 2019](https://www.anaconda.com/distribution/)
 - First prompt will be used for running the Django web app on a development server
 - Second prompt will be used for running Scrapy, the web scraping tool, as a daemon/background process, where Django can run it.
 
