@@ -36,8 +36,9 @@ pip install -r requirements.txt
 
 ##### 6. Create results folder
 - Create two empty folders in the project root directory (case-sensitive). This is where the scraped data will be stored.
-_/results_
-_/weiboresults_
+- _/results_
+- _/weiboresults_
+
 
 
 ## Deployment
@@ -77,4 +78,5 @@ cd webcrawler
 scrapy
 ```
 
-##### 4. 
+##### 4. Run on browser
+Open your browser, type the following URL: `localhost:8000/main`
