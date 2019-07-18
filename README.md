@@ -34,6 +34,7 @@ pip install -r requirements.txt
 - To obtain your IP address, open Command Prompt, type: `ipconfig`, find the value for _IPv4 Address_
 - This is necessary if your want to allow other computers to access your server. If you are the only user, you can keep `ALLOWED HOSTS = []` as an empty list.
 
+
 ##### 6. Create results folder
 - Create two empty folders in the project root directory (case-sensitive). This is where the scraped data will be stored.
 - _/results_
@@ -61,6 +62,8 @@ conda deactivate
 
 
 ##### 2. First prompt - Django
+- ** Run once: `python manage.py migrate` creates necessary tables in the database.
+- ** _(Optional)_ Run once: `python manage.py createsuperuser` and fill in the credentials in the prompt. Creates an admin user so that you can view ongoing TiebaTasks in the database
 - Run Django server
 - The additional argument "0.0.0.0:8000" allows other computers on the network to access the development server
 - If you are the only user, you do not need the additional argument, simply `python manage.py runserver` will do
@@ -78,5 +81,7 @@ cd webcrawler
 scrapy
 ```
 
+
 ##### 4. Run on browser
-Open your browser, type the following URL: `localhost:8000/main`
+- Open your browser, type the following URL: `localhost:8000/main` and you should see the landing page. Enjoy!
+- _(Optional)_ If you have created an admin user as explained under "2. First prompt - Django" above, you can go to `localhost:8000/admin`, login with the credentials that you entered in the prompt, and view ongoing TiebaTasks.
