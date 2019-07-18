@@ -1,7 +1,7 @@
 ﻿# Project specific folders
 results/
 weiboresults/
-venv/
+# venv/
 
 # VS Code
 .vscode/

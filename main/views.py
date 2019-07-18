@@ -279,7 +279,7 @@ class KeywordSearchData(APIView):
         keywords_with_frequency = None
         MAX = 10
 
-        if folder and search_input and folderExists(folder):
+        if folder and search_input and folder_exists(folder):
             file_path = (RESULTS_PATH / folder / 'replies.csv').resolve()
             keywords = list(dict.fromkeys(search_input.split())) # remove duplicates
             keywords = keywords[:min(MAX, len(keywords))]
@@ -602,9 +602,7 @@ def schedule(keyword, start_date, end_date, folder_name):
 
 
 def get_crawl_status(task_id):
-    '''
-        Get task status for tieba.
-    '''
+    ''' Get task status for tieba '''
     return scrapyd.job_status('default', task_id)
 
 
@@ -718,7 +716,7 @@ def write_to_csv(folder_full_path, filename, data):
         csv.writer(f, dialect="excel").writerows(data)
 
 
-def folderExists(folder):
+def folder_exists(folder):
     history = get_history()
     return history and folder in history
 
