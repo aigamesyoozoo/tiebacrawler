@@ -2,14 +2,6 @@ main {
   background-color: #f8f9fa;
   min-height: 100vh;
 }
-.query_box {
-  width: 70%;
-  background-color: white;
-  margin: 50px auto;
-  padding: 40px;
-  border-radius: 20px;
-  border: 1px solid #dddddd;
-}
 
 .crawl_message {
   width: 90%;
@@ -26,7 +18,24 @@ main {
   height: 100px;
 }
 
-.wrapper {
+li {
+  margin-bottom: 10px;
+}
+
+.row {
+  margin-left: 30px !important;
+  margin-right: 30px !important;
+}
+
+.card {
+  border-radius: 0.8rem !important;
+}
+
+.mb-4 {
+  margin: 1rem !important;
+}
+
+/* .wrapper {
   width: 70%;
   margin: 50px auto;
   margin-top: 30px;
@@ -35,33 +44,16 @@ main {
   margin: 10px;
   border-radius: 10px;
   border: 1px #dddddd solid;
-}
+} */
 
-.wrapper li {
+/* .wrapper li {
   text-align: left;
-}
+} */
 
-#download_segment {
-  display: none;
-}
-
-#query_segment {
+/* #query_segment {
   display: block;
-}
+} */
 
-#tieba_count_list {
+/* #tieba_count_list {
   list-style: none;
-}
-li {
-  margin-bottom: 10px;
-}
-.row {
-  margin-left: 30px !important;
-  margin-right: 30px !important;
-}
-.card {
-  border-radius: 0.8rem !important;
-}
-.mb-4 {
-  margin: 1rem !important;
-}
+} */

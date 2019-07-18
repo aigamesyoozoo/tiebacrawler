@@ -1,3 +1,4 @@
+<!-- Results page for Weibo -->
 {% extends 'main/base.html' %} {% block content %}
 {% if folder %}
   <div class="alert alert-success crawl_message" role="alert">
@@ -6,9 +7,8 @@
       <p>
         We have crawled for you the posts of <b>{{ keyword }}</b>.
       </p>
-      <!-- <p>Download the data: <a href="/downloads/{{folder}}/{{folder}}.zip">{{ folder }}.zip</a>
-      </p> -->
   </div>
+  
   <!--Table-->
   {% include 'main/components_weibo.html' %} {% load staticfiles %}
 

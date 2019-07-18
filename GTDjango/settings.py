@@ -21,14 +21,9 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = '*11pp-_t%yfh20lf*w(s@es_8uvmr1=_w+xa$nr^o*1lj7fy+f'
-# SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', '*11pp-_t%yfh20lf*w(s@es_8uvmr1=_w+xa$nr^o*1lj7fy+f')
-# SECRET_KEY = os.environ['SECRET_KEY']
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-# DEBUG = os.environ.get('DJANGO_DEBUG', '') != 'False'
-# export DJANGO_DEBUG=False
-
 
 ALLOWED_HOSTS = [
     # '172.29.59.75',
@@ -148,20 +143,13 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
+DOWNLOAD_URL = '/downloads/'
+
 script_dir = os.path.dirname(__file__)  # <-- absolute dir the script is in
 script_path = Path(script_dir)
-rel_path_results = '../results/'
-rel_path_tiebacount = rel_path_results + 'tieba_count.csv'
+
 RESULTS_PATH = (script_path / '../results/').resolve()
 WEIBO_RESULTS_PATH = (script_path / '../weiboresults/').resolve()
 PROXIES_PATH = (script_path / '../proxies/').resolve()
-TIEBACOUNT_PATH = (RESULTS_PATH / 'tieba_count.csv').resolve()
-
 CHROMEDRIVER_PATH = r'C:\Program Files\Chromedriver\chromedriver.exe'
 
-# rel_path_results = '../results/'
-# rel_path_tiebacount = rel_path_results + 'tieba_count.csv'
-# TIEBACOUNT_PATH = os.path.join(script_dir, rel_path_tiebacount)
-# using Path
-
-DOWNLOAD_URL = '/downloads/'

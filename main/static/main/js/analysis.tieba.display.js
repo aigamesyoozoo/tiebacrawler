@@ -18,7 +18,6 @@ function getAnalysis(newFolder) {
       folder: folderName
     },
     success: function(data) {
-      console.log(data);
       if (data.forums == null) {
         visibility(components.slice(0, 1), "none");
       } else {
@@ -29,9 +28,6 @@ function getAnalysis(newFolder) {
         visibility(components.slice(1, 5), "none");
       } else {
         visibility(components.slice(1, 5), "inline-block");
-        console.log(data.stats);
-        console.log(data.stats.replies_count);
-        console.log(data.stats["replies_count"]);
         displaySummary(data.summary, data.stats.replies_count);
         displaySentiments(data.sentiments);
         displayKeywords(data.keywords);

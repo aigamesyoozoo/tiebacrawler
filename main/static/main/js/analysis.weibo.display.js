@@ -32,17 +32,16 @@ function visibility(selected, displayOption) {
 
 function displayPosts(data) {
   let postsContainer = document.getElementById("postsContainer");
+  // Recreate new poststable for new dataset
   postsContainer.innerHTML =
     '<table id="poststable" class="table table-striped" style="max-width: 100%;"></table>';
 
   let table = document.querySelector("table");
   generateTable(table, data); // Need to generate data before head, else data will be populated in thead instead of tbody
   generateTableHead(table);
-  // if (!$.fn.dataTable.isDataTable("#poststable")) {
   $("#poststable").DataTable({
     columnDefs: [{ width: 400, targets: 0 }]
   });
-  // }
   postsContainer.style.display = "block";
 }
 

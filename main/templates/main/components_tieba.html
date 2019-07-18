@@ -1,4 +1,5 @@
 <div class="row">
+
   <!--Keywords-->
   <div class="col card border-0 shadow mb-4" id="hello">
     <div class="card-body">
@@ -27,6 +28,7 @@
 </div>
 
 <div class="row">
+
   <!--Popular Tieba-->
   <div class="col card border-0 shadow mb-4">
     <div class="card-body">
@@ -63,6 +65,7 @@
 </div>
 
 <div class="row">
+
   <!--Search keywords-->
   <div class="col-6 card border-0 shadow mb-4">
       <div class="card-body">
@@ -93,7 +96,6 @@ $("#keyword_search_form").submit(function (e) {
     var search_input = $('input[name=search_input]').val();
     var proceed = true;
     if (search_input === "") {
-        // $('input[name=search_input]').css('border-color', 'red');
         proceed = false;
     }
     if (proceed) {

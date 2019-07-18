@@ -1,4 +1,3 @@
-// display tiebas upon page load
 var endpoint = "";
 var history_dict = {};
 var filter1 = "media";

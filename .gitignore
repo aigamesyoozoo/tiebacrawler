@@ -1,14 +1,10 @@
-﻿/*Db.*
-webcrawler/dbs/*
+﻿# Project specific folders
 results/
-weibo_data/
 weiboresults/
 venv/
 
-
 # VS Code
 .vscode/
-
 
 # Created by https://www.gitignore.io/api/django,pycharm
 # Edit at https://www.gitignore.io/?templates=django,pycharm

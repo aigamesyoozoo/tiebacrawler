@@ -1,12 +1,12 @@
 {% extends 'main/base.html' %} {% block content %} {% load static %}
 
 <div class="container">
+
   <!--SEARCH BOX-->
   <div id="query_box" class="row" style="margin: 0 auto;">
     <div class="col"></div>
     <div class="col-9 card border-0 shadow mb-4">
       <div class="card-body">
-        <!-- <div class="query_box"> -->
         <ul
           class="nav nav-tabs md-tabs nav-justified"
           id="myTabMD"
@@ -38,6 +38,8 @@
           </li>
         </ul>
         <div class="tab-content card pt-5 " id="myTabContentMD">
+          
+          <!-- Tieba tab -->
           <div
             class="tab-pane active"
             id="tieba_searchbox"
@@ -85,6 +87,8 @@
             </form>
             {% endif %}
           </div>
+
+          <!-- Weibo tab -->
           <div
             class="tab-pane"
             id="weibo_searchbox"
@@ -111,26 +115,18 @@
                 value="Crawl User's Data"
                 class="btn btn-success"
               />
-
-              <br /><br />
+              <input type="hidden" name="uid" value="" />
+              <input type="hidden" name="uname" value="" />
             </form>
-            <div class="alert alert-danger" role="alert">
-              <p>
-                <b>Important!</b> Please ensure that the same task (i.e. same
-                weibo, same date range) is <b>not</b> running concurrently on
-                multiple computers.
-              </p>
-            </div>
+            <br /><br />
           </div>
         </div>
       </div>
     </div>
-    <!-- </div> -->
     <div class="col"></div>
   </div>
 
-
-  <!--DOWNLOADING-->
+  <!-- DOWNLOADING (WEIBO)-->
   {% include 'main/downloading_message.html' %}
 </div>
 
@@ -139,13 +135,11 @@
   $(function() {
     $(".nav-tabs a").click(function(e) {
       e.preventDefault();
-      //var contents = $(".myTabContentMD").children.removeClass("active");
       $(".tab-pane").removeClass("active");
       var pane_id = $(this).attr("href");
       $(pane_id).addClass("active");
     });
   });
-  
 </script>
 
 {% endblock %}

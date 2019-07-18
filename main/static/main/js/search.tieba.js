@@ -17,8 +17,16 @@ function submit_task(
       end_date_month: end_date_month
     },
     dataType: "json",
-    success: function(data) {}
+    success: function(data) {
+      setSubmitCancelDetails(data);
+    }
   });
+}
+
+function setSubmitCancelDetails(data) {
+  document.forms["query_form"]["task_id"].value = data.task_id;
+  document.forms["cancel"]["task_type"].value = "tieba";
+  document.forms["cancel"]["id"].value = data.task_id;
 }
 
 function validate() {
@@ -52,18 +60,25 @@ function validate() {
     },
     dataType: "json",
     success: function(data) {
-      if (data.Is_existed) {
-        if (
-          !confirm(
-            "The selected tieba with this date range has been already crawled before, would you want to continue and override the previous data?"
-          )
-        ) {
-          Is_overrided = false;
+      if (!data.is_ongoing_task) {
+        if (data.Is_existed) {
+          if (
+            !confirm(
+              "The selected tieba with this date range has been already crawled before, would you want to continue and override the previous data?"
+            )
+          ) {
+            Is_overrided = false;
+          } else {
+            Is_overrided = true;
+          }
         } else {
           Is_overrided = true;
         }
       } else {
-        Is_overrided = true;
+        alert(
+          'This Tieba and date range is currently being crawled and its data will be available in the "History-Tieba" tab soon. Please select a different Tieba/date range for crawling.'
+        );
+        Is_overrided = false;
       }
     }
   });
@@ -94,9 +109,11 @@ function downloadView() {
   query_segment.style.display = "none";
 }
 
+/*
 $(window).on("unload", function() {
   $.ajax({
     type: "GET",
     url: "/main/cancel/"
   });
 });
+*/

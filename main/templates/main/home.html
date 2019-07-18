@@ -4,7 +4,7 @@
 
   <!-- QUERY -->
   <div class="row">
-    <div id="query_segment" class="col card border-0 shadow mb-4">
+    <div id="query_segment" class="col card border-0 shadow mb-4" style="display:block;">
       <div class="card-body">
       <h3>Tieba and Date selection</h3>
       <br />
@@ -47,13 +47,10 @@
           value="Start Crawling!"
           class="btn btn-success"
         />
+        <input type="hidden" name="task_id" value="" />
+        <br>
+        <br>
         
-        <br>
-        <br>
-        <div class="alert alert-danger" role="alert">
-          <p><b>Important!</b> Please ensure that the same task (i.e. same tieba, same date range) is <b>not</b> running concurrently on multiple computers. </p>
-        </div>
-
         {% else %}
         <p>No relevant forums/tieba. Would you like to return to home page?</p>
         <a href="{% url 'main:index' %}"> Return to Home Page</a>

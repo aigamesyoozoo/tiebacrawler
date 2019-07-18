@@ -1,5 +1,4 @@
-// display tiebas upon page load
-var endpoint = "/main/api/history/tieba";
+var endpoint = "";
 var history_dict = {};
 var filter1 = "media";
 var filter2 = "dates";
