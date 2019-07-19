@@ -71,25 +71,26 @@
             <a class="nav-link" href="{% url 'main:index' %}">Home</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="{% url 'main:history_tieba' %}"
-              >History-Tieba</a
-            >
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'main:history_weibo' %}"
-              >History-Weibo</a
-            >
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'main:csvdownload' %}"
-              >Download Tieba CSVs</a
-            >
-          </li>
-          <li class="nav-item">
             <a class="nav-link" href="{% url 'main:pending' %}"
               >Pending Tasks</a
             >
           </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'main:history_weibo' %}"
+              >Weibo-History</a
+            >
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'main:history_tieba' %}"
+              >Tieba-History</a
+            >
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'main:csvdownload' %}"
+              >Tieba-Download CSVs</a
+            >
+          </li>
+          
         </ul>
       </nav>
       {% block content %} {% endblock %}
