@@ -1,6 +1,28 @@
 # Tieba/Weibo Webcrawler
 
+
+
+## Features
+
+
+#### Tieba
+- Search for multiple Tieba
+- Crawls content of selected tieba within selected date range. Content includes posts, replies, comments and the favourited tiebas of users who authored these content.
+- Display analysis of data, including keyword analysis, sentiment analysis, content summary (links to original post), and popular tiebas with hit rate
+
+#### Weibo
+- Search for Weibo user
+- Crawl posts of user
+- Display posts in table format with sorting and searching functions
+
+#### Tieba and Weibo - Task Management
+- Cancel current crawling task and delete crawled data
+- Crawl multiple Tieba and Weibo users concurrently
+
+
+
 ## Setting up
+
 
 ##### 1. Install python and anaconda
 - Recommended to use the same versions used to develop this project
