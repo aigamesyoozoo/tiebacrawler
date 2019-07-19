@@ -14,11 +14,10 @@
       <br />
 
       <form name="cancel" action="{% url 'main:cancel' %}" method="get">
-        <input type="submit" value="Cancel this Task" class="btn btn-danger" />
+        <input type="submit" value="Cancel Task and Delete all crawled data" class="btn btn-danger" />
         <input type="hidden" name="task_type" value="" />
         <input type="hidden" name="id" value="" />
       </form>
-      <p>If you cancel this task, all crawled data will be deleted.</p>
     </div>
 
     <img

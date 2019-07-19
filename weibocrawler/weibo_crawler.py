@@ -1,13 +1,13 @@
-import urllib.request
-import json
-import time
-from itertools import cycle
-import datetime
 from copy import deepcopy
-import re
+import datetime
 from GTDjango.settings import WEIBO_RESULTS_PATH,PROXIES_PATH
+from itertools import cycle
+import json
 import os
+import re
 import subprocess
+import time
+import urllib.request
 
 class WeiboCrawlTask(object):
 
@@ -185,14 +185,14 @@ class WeiboCrawlTask(object):
 
 	@classmethod
 	def cancel_weibo_crawl(cls, folder_name):
+		cancelled = False
 		task = WeiboCrawlTask.get_task(folder_name)
-		
 		if task: 
 			WeiboCrawlTask.ALL_WEIBO_TASKS.remove(task)
-			for x in WeiboCrawlTask.ALL_WEIBO_TASKS:
-				print(x)
 			task.status = 'cancel' # flags for any ongoing process to stop. As killing the process directly is not advised.
-
+			cancelled = True
+		
+		return cancelled
 
 	@classmethod
 	def get_task(cls, folder_name):

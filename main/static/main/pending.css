@@ -1,0 +1,16 @@
+.logo-text{
+    font-weight: bold;
+    font-size: 1.2em; 
+    padding-left:10px;
+}
+.task-info{
+    font-weight: bold;
+    padding: 0px 2px 0px 2px;
+}
+.task-heading{
+    font-style: italic;
+    padding: 0px 5px 0px 5px;
+}
+.task-icon{
+    height:30px;
+}

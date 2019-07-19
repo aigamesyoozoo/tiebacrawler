@@ -3,28 +3,31 @@
 <div class="container">
 
   <!--SEARCH BOX-->
-  <div id="query_box" class="row" style="margin: 0 auto;">
+  <div id="query_box" class="row only-row">
     <div class="col"></div>
-    <div class="col-9 card border-0 shadow mb-4">
+    <div class="col-10 card border-0 shadow mb-4 only-card">
       <div class="card-body">
+      <h2 class="heading">Search and Crawl</h2>
+      <br><br>
         <ul
           class="nav nav-tabs md-tabs nav-justified"
           id="myTabMD"
           role="tablist"
         >
-          <li class="nav-item">
-            <a
-              class="nav-link active"
-              id="tieba_search"
-              data-toggle="tab"
-              href="#tieba_searchbox"
-              role="tab"
-              aria-controls="tieba"
-              aria-selected="true"
-              >Search for Tieba</a
-            >
+          <li class="nav-item" style="font-weight: bold;">
+              <a
+                class="nav-link active"
+                id="tieba_search"
+                data-toggle="tab"
+                href="#tieba_searchbox"
+                role="tab"
+                aria-controls="tieba"
+                aria-selected="true"
+                >Search for Tieba
+                <img src="/static/main/images/tieba_icon.png" height="25px" alt="Tieba">
+                </a>
           </li>
-          <li class="nav-item">
+          <li class="nav-item" style="font-weight: bold;">
             <a
               class="nav-link"
               id="weibo_search"
@@ -33,12 +36,13 @@
               role="tab"
               aria-controls="weibo"
               aria-selected="false"
-              >Crawl Weibo User</a
-            >
+              >Crawl Weibo User
+              <img src="/static/main/images/weibo_icon.png" height="25px" alt="Weibo">
+              </a>
           </li>
         </ul>
-        <div class="tab-content card pt-5 " id="myTabContentMD">
-          
+        <div class="tab-content card card-body pt-5 " id="myTabContentMD">
+                   
           <!-- Tieba tab -->
           <div
             class="tab-pane active"
@@ -55,7 +59,7 @@
               <input
                 type="text"
                 name="kw"
-                placeholder="Enter keywords"
+                placeholder="Enter keywords, separate multiple keywords with a space"
                 class="form-control"
               /><br />
 
@@ -112,13 +116,12 @@
               <p>If there is no exact match for the provided user name, the highest ranked user in weibo's suggested list will be crawled instead.</p>
               <input
                 type="submit"
-                value="Crawl User's Data"
+                value="Crawl User!"
                 class="btn btn-success"
               />
               <input type="hidden" name="uid" value="" />
               <input type="hidden" name="uname" value="" />
             </form>
-            <br /><br />
           </div>
         </div>
       </div>

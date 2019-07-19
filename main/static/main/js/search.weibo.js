@@ -66,18 +66,3 @@ function downloadView() {
   download_segment.style.display = "block";
   query_segment.style.display = "none";
 }
-/*
-$(window).on("unload", function() {
-  var download_segment = document.getElementById("download_segment");
-  if (download_segment.style.display == "block") {
-    $.ajax({
-      type: "GET",
-      url: "/main/cancel/",
-      data: {
-        task_type: "weibo",
-        folder_name: document.forms["cancel"]["folder_name"].value
-      }
-    });
-  }
-});
-*/

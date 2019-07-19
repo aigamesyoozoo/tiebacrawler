@@ -16,6 +16,7 @@ urlpatterns = [
     path('validate/', views.validate_isexisted, name='validate'),
     path('result/tieba/', views.result_tieba, name='downloaded'),
     path('csvdownload/', views.csvdownload, name='csvdownload'),
+    path('pending/', views.pending, name='pending'),
     path('api/chart/analysis/', views.ChartData.as_view()),
     path('api/chart/keywordsearch/', views.KeywordSearchData.as_view()),
     path('api/history/tieba/', views.TiebaHistoryData.as_view()),

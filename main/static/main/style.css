@@ -35,25 +35,13 @@ li {
   margin: 1rem !important;
 }
 
-/* .wrapper {
-  width: 70%;
-  margin: 50px auto;
-  margin-top: 30px;
+.only-row{
+  padding-top: 50px;
+}
+
+.heading{
   text-align: center;
-  padding: 20px;
-  margin: 10px;
-  border-radius: 10px;
-  border: 1px #dddddd solid;
-} */
-
-/* .wrapper li {
-  text-align: left;
-} */
-
-/* #query_segment {
-  display: block;
-} */
-
-/* #tieba_count_list {
-  list-style: none;
-} */
+}
+.only-card{
+  padding: 30px;
+}

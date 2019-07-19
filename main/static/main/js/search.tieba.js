@@ -108,12 +108,3 @@ function downloadView() {
   download_segment.style.display = "block";
   query_segment.style.display = "none";
 }
-
-/*
-$(window).on("unload", function() {
-  $.ajax({
-    type: "GET",
-    url: "/main/cancel/"
-  });
-});
-*/

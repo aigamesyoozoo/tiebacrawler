@@ -1,0 +1,85 @@
+{% extends 'main/base.html' %} {% block content %}
+
+<!--CSS-->
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'main/pending.css' %}">
+
+<div class="container">
+  <div class="row ">
+    <div class="col card border-0 shadow mb-4">
+      <div class="card-body">
+        <h2 class="heading">Pending Tasks</h2>
+        <br>
+        <p style="text-align:center;"><i>Updated as of:</i> <strong>{{ date }}</strong></p>
+        <br>
+
+        {% if tieba_list %}
+            {% for tieba in tieba_list %}
+            <div class="card border-0 shadow mb-4">
+              <div class="card-body border-0">
+                <div class="row no-gutters">
+                  <div class="col-md-2 my-auto">
+                    <img src="/static/main/images/tieba_icon.png" alt="Tieba" class="task-icon">
+                    <span class="logo-text my-auto">Tieba<span>
+                  </div>
+                  <div class="col-md-6 my-auto">
+                    <span class="task-heading">Crawling</span>
+                    <span class="task-info">{{ tieba.keyword }}</span>
+                    <span class="task-heading">from</span>
+                    <span class="task-info">{{ tieba.start_date }}</span>
+                    to
+                    <span class="task-info">{{ tieba.end_date }}</span>
+                  </div>
+                  <div class="col-md-4 my-auto">
+                    <form name="cancel" action="{% url 'main:cancel' %}" method="get" style="float:right">
+                      <input type="submit" value="Cancel Task and Delete data" class="btn btn-danger" />
+                      <input type="hidden" name="task_type" value="tieba" />
+                      <input type="hidden" name="id" value="{{ tieba.task_id }}" />
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+        {% else %}
+          <div class="alert alert-success" role="alert">
+            <p><strong>Clear!</strong> No pending <strong>Tieba</strong> tasks at the moment.</p>
+          </div>
+        {% endif %}
+
+        {% if weibo_list %}
+          {% for weibo in weibo_list %}
+            <div class="card border-0 shadow mb-4">
+              <div class="card-body border-0">
+                <div class="row no-gutters">
+                  <div class="col-md-2 my-auto">
+                    <img src="/static/main/images/weibo_icon.png" alt="Weibo" class="task-icon">
+                    <span class="logo-text">Weibo<span>
+                  </div>
+                  <div class="col-md-6 my-auto">
+                    <span class="task-heading">Crawling</span>
+                    <span class="task-info">{{ weibo.folder_name }}</span>
+                  </div>
+                  <div class="col-md-4 my-auto">
+                    <form name="cancel" action="{% url 'main:cancel' %}" method="get" style="float:right">
+                      <input type="submit" value="Cancel Task and Delete data" class="btn btn-danger" />
+                      <input type="hidden" name="task_type" value="weibo" />
+                      <input type="hidden" name="id" value="{{ weibo.folder_name }}" />
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="alert alert-success" role="alert">
+            <p><strong>Clear!</strong> No pending <strong>Weibo</strong> tasks at the moment.</p>
+          </div>
+        {% endif %}
+        <br>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

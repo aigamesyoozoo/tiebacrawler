@@ -1,9 +1,19 @@
 {% extends 'main/base.html' %} {% block content %}
 
+{% if cancelled %}
   <div class="alert alert-warning crawl_message" role="alert">
     <h4 class="alert-heading">Crawling Cancelled...</h4>
     <br />
     <p><b>All crawled data have been deleted.</p>
   </div>
+
+{% else %}
+  <div class="alert alert-danger crawl_message" role="alert">
+    <h4 class="alert-heading">Cancellation Error</h4>
+    <br />
+    <p>Oops! Task is no longer able to be cancelled. It may be completed or already cancelled.</p>
+  </div>
+  
+{% endif %}
 
 {% endblock %}
